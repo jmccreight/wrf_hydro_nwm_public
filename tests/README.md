@@ -11,52 +11,71 @@ state, but it is funcitonal. Improvements are on their way.
 * Reproducibility and communication: log files
 * Support your development: boost confidence, find bugs faster
 
-The mantra is: *Test with every compile.*
+The mantra is: *Test with every compile on small domains.*
 
 
 ## Overview
-Conceptually a *candidate* takes a *test*. The take\_test name
-emphasizes that there are two parts: the taker and the test. The
-candidate is the state of this (or some other) repository. The tests
-are encoded in the `tests/` directory. The tests refere to another
-repository state called the "reference", this is a blessed state of
-the repository for the candidate's results.
+Conceptually a *candidate* takes a *test*. The names of the `take\_test.sh` 
+and and `take_test.py` scripts emphasize that there are two parts: the taker 
+and the test. The candidate which takes the test is the state of this (or 
+potentially some other) repository. The tests are encoded in the `tests/` 
+directory. The tests referr to another repository state called the 
+"reference", this is a blessed state of the repository for the candidate's 
+results.
 
+By default: 
+* Candidate is the current (potentially uncommitted) state of the repo from which 
+`take_test` is invoked. 
+* Reference is upstream/master (either NCAR/wrf_hydro_nwm_public or 
+NCAR/wrf_hydro_nwm).
+* The tests are defined by the `tests/test_*` files. 
 
 ## Usage
-Currently:  
-`python take_test.py <options>`
+Currently there are 2 ways to invoke the testing. The fundamental way:
+`python take_test.py <options>`. This works fine on linux. But if you want to 
+test on a non-linux machine using docker, the following script is meant to be 
+a machine independent interface: `take_test.sh <options>`. This later script is 
+still under development.
 
-In the future, we aim to provide a more general script which will 
-choose and run in docker if not on a known machine. 
+Both of the "take_test" scripts may be preceeded with a path or
+invoked in the `tests/` directory, as shown. 
 
-Supported machines: cheyenne and docker. There are sections below 
+The options are described below.
+
+Currently supported machines: cheyenne and docker. There are sections below 
 about both of these. More machines can be added. 
 
-
-Options are currently described by:
-`python take_test.py --help`:
-
+Options (all optional) are described by:
+`python take_test.py --help` and `./take_test.sh --help`:
 
 ```
-usage: take_test.py [-h] [--domain path to domain directory]
-                    [--candidate_spec_file candidate spec file]
-                    [--config model configuration key]
-                    [--test_spec test specification key]
+Retrieving the help from take_test.py...
+
+usage: take_test.py [-h] [--domain /path/to/domain/directory]
+                    [--candidate_spec_file path/to/candidate_spec_file]
+                    [--config [key [key ...]]] [--test_spec [key [key ...]]]
 
 A WRF-Hydro candidate takes a test.
 
 optional arguments:
   -h, --help            show this help message and exit
-  --domain path to domain directory
+  --domain /path/to/domain/directory
                         Path to the domain directory.
-  --candidate_spec_file candidate spec file
-                        The candidate specification file.
-  --config model configuration key
-                        Key for model configuration (default is all)
-  --test_spec test specification key
-                        Key for specifying the desired tests
+  --candidate_spec_file path/to/candidate_spec_file
+                        The YAML candidate specification file.
+  --config [key [key ...]]
+                        Zero or more keys separated by whitespace for model
+                        configuration selection (no keys runs all
+                        configurations).
+  --test_spec [key [key ...]]
+                        Zero or more keys separated by whitespace for
+                        specifying the desired tests. These keys are grepped
+                        against the test_*py files in the tests/ directory.
+
+take_test.sh notes: 
+  When using docker, the domain argument becomes the key which is the basename of the path.
 ```
+
 
 
 ## Configuration files
@@ -67,15 +86,16 @@ example in bash:
 `export WRF_HYDRO_TESTS_USER_SPEC=~/wrf_hydro_tests_user_spec.yaml`
 
 The `wrf_hydro_nwm_public/tests/tests/template_user_spec.yaml` should
-be copied a new location and edited to meet your needs.
+be copied a new location and edited to meet your needs (do not put
+your edits under version control).
 
 ### Candidate spec file
 The `wrf_hydro_nwm_public/tests/template_candidate_spec.yaml` should
-be copied and modified for specific tests. This file allows for the
-maximum testing flexibility. 
+be copied and modified for specific tests (do not put your edits under
+version control). This file allows for the maximum testing flexibility. 
 
 ### Machine spec file
-This file is update for new machines (your cluster or your desktop) to
+This file is to be updated for new machines (your cluster or your desktop) to
 run the tests. These changes should come back via version control so
 that each machine only needs specified just once. 
 
@@ -97,7 +117,7 @@ testing: wrfhydro/domains:croton_NY. We will shortly provide a better
 way to pull this domain and other domains outside the docker context.
 
 
-## Cheyenne Example
+## Cheyenne Setup
 1. Setup the python 3.6.4 virutal env per cisl instructions.
    Python 3.6.4+ is required.
    Both sections   
@@ -111,28 +131,8 @@ way to pull this domain and other domains outside the docker context.
    Currently (may be out of date) this is, for example:  
       `pip install jupyter cartopy rasterio netcdf4 dask f90nml deepdiff xarray plotnine boltons pytest pytest-datadir-ng wrfhydropy`
    If a development version of wrfhydropy is needed, you'll need to clone that repository to cheyenne, then do the following:  
-      `cd /path/to/wrf_hydro_py/; pip uninstall -y wrfhydropy; python setup.py develop`
+      `cd /path/to/wrf_hydro_py/; pip uninstall -y wrfhydropy; python setup.py install`
 
 ## Docker Example
-
-## Get docker images
-docker pull wrfhydro/dev:conda
-docker pull wrfhydro/domains:croton_NY
-
-## Create data volume
-docker create --name croton_NY wrfhydro/domains:croton_NY
-
-## Start docker
-docker run --volumes-from croton_NY -v YOUR_WRF_HYDRO_NWM_CODE_DIRECTORY:/home/docker/wrf_hydro_nwm_public -it wrfhydro/dev:conda
-
-### Running inside of docker issue the following commands
-#### Install correct version of wrfhydropy
-pip uninstall -y wrfhydropy
-pip install wrfhydropy
-
-#### Change directory to wrf_hydro_nwm and run tests
-cd /home/docker/wrf_hydro_nwm_public
-pytest -v --domain_dir=/home/docker/domain/croton_NY 
-          --candidate_dir=YOUR_REFERENCE_CODE_DIRECTORY/trunk/NDHMS
-          --reference_dir=YOUR_CANDIDATE_CODE_DIRECTORY/trunk/NDHMS 
-          --output_dir=/home/docker/test_out"
+The docker setup is given in `take_test.sh`. Comments are provided for
+the docker commands.
