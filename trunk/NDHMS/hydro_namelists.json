@@ -30,7 +30,6 @@
             "output_channelbucket_influx": 0,
             "output_gw": 1,
             "ovrtswcrt": 1,
-            "reservoir_persistence": false,
             "restart_file": "NULL_specified_in_domain.json",
             "route_lake_f": "NULL_specified_in_domain.json",
             "route_link_f": "NULL_specified_in_domain.json",
@@ -66,7 +65,13 @@
     },
 
     "nwm_ana": {
-        "hydro_nlist": {},
+        "hydro_nlist": {
+            "reservoir_persistence": true,
+            "reservoir_persistence_parameter_file": "NULL_specified_in_domain.json",
+            "reservoir_timeslice_path": "NULL_specified_in_domain.json",
+            "reservoir_observation_lookback_hours": 24,
+            "reservoir_observation_update_time_interval_seconds": 3600
+        },
         "nudging_nlist": {}
     },
 
@@ -75,6 +80,7 @@
             "aggfactrt": 1,
             "dxrt": 1000,
             "ovrtswcrt": 0,
+            "reservoir_persistence": false,
             "rst_typ": 0,
             "rtout_domain": 0,
             "subrtswcrt": 0
