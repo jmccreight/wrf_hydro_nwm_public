@@ -1149,8 +1149,13 @@ module module_NoahMP_hrldas_driver
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ISNOW"   , ISNOWXY  )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "CANLIQ"  , CANLIQXY )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "CANICE"  , CANICEXY )
-     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNEQV"   , state%SNOW     )
-     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNOWH"   , state%SNOWH    )
+     ! call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNEQV"   , state%SNOW     )
+     ! call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNOWH"   , state%SNOWH    )
+     ! this effectively makes the prognostic snow variables: SNICEXY, SNLIQXY, and ZSNSOXY
+     ! removing the redundant SNEQV and SNOWH bulk variables
+     ! should probably ensure that inactive snow layers in the sum have zero values
+     state%SNOW = SUM(state%SNICEXY, 2) + SUM(state%SNLIQXY, 2)
+     state%SNOWH = SUM(state%ZSNSOXY(:, -3:-1, :), 2)
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "TV"      , TVXY     )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "TG"      , TGXY     )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ZWT"     , ZWTXY    )
