@@ -381,6 +381,7 @@ module module_NoahMP_hrldas_driver
   INTEGER           :: MAPPROJ
   REAL              :: LAT1
   REAL              :: LON1
+  integer           :: ilayer
 
 #ifdef MPP_LAND
   integer ix_tmp, jx_tmp
@@ -1149,13 +1150,24 @@ module module_NoahMP_hrldas_driver
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ISNOW"   , ISNOWXY  )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "CANLIQ"  , CANLIQXY )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "CANICE"  , CANICEXY )
+
      ! call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNEQV"   , state%SNOW     )
      ! call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNOWH"   , state%SNOWH    )
      ! this effectively makes the prognostic snow variables: SNICEXY, SNLIQXY, and ZSNSOXY
      ! removing the redundant SNEQV and SNOWH bulk variables
      ! should probably ensure that inactive snow layers in the sum have zero values
+
+     do ilayer = -3, -1
+        where (ISNOWXY .gt. ilayer)
+           state%SNICEXY(:, ilayer+1, :) = 0.0000000
+           state%SNLIQXY(:, ilayer+1, :) = 0.0000000
+        end where
+     end do
+     ! This one-liner works but assumes unused layers at each point are set to zero. The preceeding ensures that.
      state%SNOW = SUM(state%SNICEXY, 2) + SUM(state%SNLIQXY, 2)
-     state%SNOWH = SUM(state%ZSNSOXY(:, -3:-1, :), 2)
+
+     state%SNOWH = -1 * state%ZSNSOXY(:, 0, :)
+
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "TV"      , TVXY     )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "TG"      , TGXY     )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ZWT"     , ZWTXY    )
