@@ -4,6 +4,7 @@ all: user_build_options
 	(cd phys;			make)
 	(cd data_structures;		make)
 	(cd IO_code;			make)
+	(cd snow_update;		make)
 	(cd run;			make)
 
 clean:
@@ -11,6 +12,7 @@ clean:
 	(cd phys;			make clean)
 	(cd data_structures;		make clean)
 	(cd IO_code;			make clean)
+	(cd snow_update;		make clean)
 	(cd run;			make clean)
 
 ### explicitly point to other land model options
@@ -19,4 +21,5 @@ NoahMP: user_build_options
 	(cd phys;			make)
 	(cd data_structures;		make)
 	(cd IO_code;			make NoahMP MOD_OPT="-DNoahMP")
+	(cd snow_update;  		make -f Makefile NoahMP)
 	(cd run;			make -f Makefile NoahMP)
