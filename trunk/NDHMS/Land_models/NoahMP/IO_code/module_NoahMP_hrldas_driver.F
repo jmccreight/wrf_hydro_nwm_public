@@ -22,7 +22,7 @@ module module_NoahMP_hrldas_driver
 
   USE module_hrldas_netcdf_io
   USE module_sf_noahmp_groundwater
-  USE module_sf_noahmpdrv, only: noahmp_init, noahmplsm
+  USE module_sf_noahmpdrv, only: noahmp_init, noahmplsm, snow_update
   USE module_date_utilities
   USE orchestrator_base
   USE config_base, only: wrf_hydro, noah_lsm
@@ -185,7 +185,7 @@ module module_NoahMP_hrldas_driver
 
 ! INOUT (with no Noah LSM equivalent) (as defined in WRF)
 
-  INTEGER, ALLOCATABLE, DIMENSION(:,:)    ::  ISNOWXY   ! actual no. of snow layers
+  ! INTEGER, ALLOCATABLE, DIMENSION(:,:)    ::  ISNOWXY   ! actual no. of snow layers
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TVXY      ! vegetation leaf temperature
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TGXY      ! bulk ground surface temperature
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CANICEXY  ! canopy-intercepted ice (mm)
@@ -206,10 +206,10 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SMCWTDXY  ! groundwater storage [mm]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  DEEPRECHXY! groundwater storage [mm]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RECHXY    ! groundwater storage [mm]
-!  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  TSNOXY    ! snow temperature [K] ** REFACTOR THIS!
-!  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  ZSNSOXY   ! snow layer depth [m] ** REFACTOR THIS!
-!  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SNICEXY   ! snow layer ice [mm] ** REFACTOR THIS!
-!  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SNLIQXY   ! snow layer liquid water [mm] ** REFACTOR THIS!
+  ! REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  TSNOXY    ! snow temperature [K] ** REFACTOR THIS!
+  ! REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  ZSNSOXY   ! snow layer depth [m] ** REFACTOR THIS!
+  ! REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SNICEXY   ! snow layer ice [mm] ** REFACTOR THIS!
+  ! REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SNLIQXY   ! snow layer liquid water [mm] ** REFACTOR THIS!
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  LFMASSXY  ! leaf mass [g/m2]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RTMASSXY  ! mass of fine roots [g/m2]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  STMASSXY  ! stem mass [g/m2]
@@ -770,7 +770,7 @@ module module_NoahMP_hrldas_driver
 
 ! INOUT (with no Noah LSM equivalent) (as defined in WRF)
 
-  ALLOCATE ( ISNOWXY   (XSTART:XEND,YSTART:YEND) )  ! actual no. of snow layers
+  ! ALLOCATE ( ISNOWXY   (XSTART:XEND,YSTART:YEND) )  ! actual no. of snow layers
   ALLOCATE ( TVXY      (XSTART:XEND,YSTART:YEND) )  ! vegetation leaf temperature
   ALLOCATE ( TGXY      (XSTART:XEND,YSTART:YEND) )  ! bulk ground surface temperature
   ALLOCATE ( CANICEXY  (XSTART:XEND,YSTART:YEND) )  ! canopy-intercepted ice (mm)
@@ -949,7 +949,7 @@ module module_NoahMP_hrldas_driver
   UDRUNOFF   = 0.0
   SMOISEQ    = undefined_real
   ALBEDO     = undefined_real
-  ISNOWXY    = undefined_int
+  ! ISNOWXY    = undefined_int
   TVXY       = undefined_real
   TGXY       = undefined_real
   CANICEXY   = undefined_real
@@ -1146,7 +1146,7 @@ module module_NoahMP_hrldas_driver
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ALBOLD"  , ALBOLDXY )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "CM"      , CMXY     )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "CH"      , CHXY     )
-     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ISNOW"   , ISNOWXY  )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ISNOW"   , state%ISNOWXY  )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "CANLIQ"  , CANLIQXY )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "CANICE"  , CANICEXY )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNEQV"   , state%SNOW     )
@@ -1211,7 +1211,7 @@ module module_NoahMP_hrldas_driver
 
      CALL NOAHMP_INIT(    LLANDUSE,     state%SNOW,    state%SNOWH,   CANWAT,   ISLTYP,   IVGTYP, &   ! call from WRF phys_init
                     TSLB,    SMOIS,     SH2O,      DZS, FNDSOILW, FNDSNOWH, &
-                     TSK,  ISNOWXY,     TVXY,     TGXY, CANICEXY,      TMN,     XICE, &
+                     TSK,  state%ISNOWXY,     TVXY,     TGXY, CANICEXY,      TMN,     XICE, &
                 CANLIQXY,    EAHXY,    TAHXY,     CMXY,     CHXY,                     &
                   FWETXY, SNEQVOXY, ALBOLDXY,  QSNOWXY, WSLAKEXY,    ZWTXY,     WAXY, &
                     WTXY,   state%TSNOXY,  state%ZSNSOXY,  state%SNICEXY,  state%SNLIQXY, LFMASSXY, RTMASSXY, &
@@ -1309,7 +1309,7 @@ module module_NoahMP_hrldas_driver
      FNDSOILW = .FALSE.
      CALL NOAHMP_INIT(    LLANDUSE,     state%SNOW,    state%SNOWH,   CANWAT,   ISLTYP,   IVGTYP, &   ! call from WRF phys_init
                     TSLB,    SMOIS,     SH2O,      DZS, FNDSOILW, FNDSNOWH, &
-                     TSK,  ISNOWXY,     TVXY,     TGXY, CANICEXY,      TMN,     XICE, &
+                     TSK,  state%ISNOWXY,     TVXY,     TGXY, CANICEXY,      TMN,     XICE, &
                 CANLIQXY,    EAHXY,    TAHXY,     CMXY,     CHXY,                     &
                   FWETXY, SNEQVOXY, ALBOLDXY,  QSNOWXY, WSLAKEXY,    ZWTXY,     WAXY, &
                     WTXY,   state%TSNOXY,  state%ZSNSOXY,  state%SNICEXY,  state%SNLIQXY, LFMASSXY, RTMASSXY, &
@@ -1638,7 +1638,7 @@ end subroutine land_driver_ini
 		   SH2O,     TSLB,     state%SNOW,    state%SNOWH,    CANWAT,     ACSNOM, &
 		 ACSNOW,    EMISS,     QSFC,                                  &
  		     Z0,      ZNT,                                            & ! IN/OUT LSM eqv
-		ISNOWXY,     TVXY,     TGXY, CANICEXY,  CANLIQXY,      EAHXY, &
+		state%ISNOWXY,     TVXY,     TGXY, CANICEXY,  CANLIQXY,      EAHXY, &
 		  TAHXY,     CMXY,     CHXY,   FWETXY,  SNEQVOXY,   ALBOLDXY, &
 		QSNOWXY, QRAINXY, WSLAKEXY,  ZWTXY,  WAXY,   WTXY,    state%TSNOXY, &
 		state%ZSNSOXY,  state%SNICEXY,  state%SNLIQXY, LFMASSXY,  RTMASSXY,   STMASSXY, &
@@ -1983,7 +1983,7 @@ subroutine  ldas_output(itime, state)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,state%SNOWH,IVGTYP,64)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,state%SNOW,IVGTYP,65)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,QSNOWXY,IVGTYP,66)
-   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,float(ISNOWXY),IVGTYP,67)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,float(state%ISNOWXY),IVGTYP,67)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SNOWC,IVGTYP,68)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ACSNOW,IVGTYP,69)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ACSNOM,IVGTYP,70)
@@ -2067,7 +2067,7 @@ subroutine lsm_restart(state)
   call add_to_restart(ncid,ALBOLDXY  , "ALBOLD")
   call add_to_restart(ncid,CMXY      , "CM"    )
   call add_to_restart(ncid,CHXY      , "CH"    )
-  call add_to_restart(ncid,ISNOWXY   , "ISNOW" )
+  call add_to_restart(ncid,state%ISNOWXY   , "ISNOW" )
   call add_to_restart(ncid,CANLIQXY  , "CANLIQ")
   call add_to_restart(ncid,CANICEXY  , "CANICE")
   call add_to_restart(ncid,state%SNOW      , "SNEQV" )
@@ -2185,7 +2185,7 @@ subroutine lsm_rst_bi_out(state)
   write(iunit,ERR=101) ALBOLDXY
   write(iunit,ERR=101) CMXY
   write(iunit,ERR=101) CHXY
-  write(iunit,ERR=101) ISNOWXY
+  write(iunit,ERR=101) state%ISNOWXY
   write(iunit,ERR=101) CANLIQXY
   write(iunit,ERR=101) CANICEXY
   write(iunit,ERR=101) state%SNOW
@@ -2315,7 +2315,7 @@ subroutine lsm_rst_bi_in(state)
   read(iunit,ERR=101) ALBOLDXY
   read(iunit,ERR=101) CMXY
   read(iunit,ERR=101) CHXY
-  read(iunit,ERR=101) ISNOWXY
+  read(iunit,ERR=101) state%ISNOWXY
   read(iunit,ERR=101) CANLIQXY
   read(iunit,ERR=101) CANICEXY
   read(iunit,ERR=101) state%SNOW
@@ -2420,7 +2420,7 @@ subroutine define_rst_variables(ncid, state)
   call define_rst_var(ncid,ALBOLDXY  , "ALBOLD")
   call define_rst_var(ncid,CMXY      , "CM"    )
   call define_rst_var(ncid,CHXY      , "CH"    )
-  call define_rst_var(ncid,ISNOWXY   , "ISNOW" )
+  call define_rst_var(ncid,state%ISNOWXY   , "ISNOW" )
   call define_rst_var(ncid,CANLIQXY  , "CANLIQ")
   call define_rst_var(ncid,CANICEXY  , "CANICE")
   call define_rst_var(ncid,state%SNOW      , "SNEQV" )
@@ -2478,7 +2478,21 @@ subroutine define_rst_variables(ncid, state)
 
    end subroutine define_rst_variables
 
+
+subroutine snow_update_all(state)
+  use state_module, only: state_type
+  type(state_type), intent(inout) :: state
+  print*, 'In snow_update_all'
+  call flush()
+  call snow_update(state)
+end subroutine snow_update_all
+
+
 end module module_NoahMP_hrldas_driver
+
+
+! -----------------------------------------------------------------------------
+
 
 !subroutine wrf_message(msg)
 !  implicit none

@@ -2,26 +2,28 @@ module state_module
   implicit none
 
   type state_type
-     !SNOW VARIABLES
-     REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  TSNOXY    ! snow temperature [K] ** REFACTOR THIS!
-     REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  ZSNSOXY   ! snow layer depth [m] ** REFACTOR THIS!
-     REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SNICEXY   ! snow layer ice [mm] ** REFACTOR THIS!
-     REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SNLIQXY   ! snow layer liquid water [mm] ** REFACTOR THIS!
-     REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOW      ! snow water equivalent [mm] ** (sometime) PROGNOSTIC VARIABLE
-     REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWH     ! physical snow depth [m] ** (sometime) PROGNOSTIC VARIABLE
+     !snow variables
+     real,    allocatable, dimension(:,:,:)  ::  tsnoxy    ! snow temperature [k] ** refactor this!
+     real,    allocatable, dimension(:,:,:)  ::  zsnsoxy   ! snow layer depth [m] ** refactor this!
+     integer, allocatable, dimension(:,:)    ::  isnowxy   ! actual no. of (variable) snow layers
+     real,    allocatable, dimension(:,:,:)  ::  snicexy   ! snow layer ice [mm] ** refactor this!
+     real,    allocatable, dimension(:,:,:)  ::  snliqxy   ! snow layer liquid water [mm] ** refactor this!
+     real,    allocatable, dimension(:,:)    ::  snow      ! snow water equivalent [mm] ** (sometime) prognostic variable
+     real,    allocatable, dimension(:,:)    ::  snowh     ! physical snow depth [m] ** (sometime) prognostic variable
    contains
      procedure :: init => init_undefined
   end type state_type
 
 contains
-  !Are we actually initializing?
+  !are we actually initializing?
   subroutine init_undefined(this)
     use config_base, only: noah_lsm
     implicit none
     
     class(state_type) :: this
-    integer, parameter :: NSNOW = 3 !As definined in module_NoahMP,hrldas_driver.F. TODO Getting from a config later
-    REAL, PARAMETER :: undefined_real = 9.9692099683868690E36 ! TODO Getting from a config later
+    integer, parameter :: nsnow = 3 !as definined in module_noahmp,hrldas_driver.f. todo getting from a config later
+    real, parameter :: undefined_real = 9.9692099683868690e36 ! todo getting from a config later
+    integer, parameter :: undefined_int = -2147483647         ! netcdf integer fillvalue: todo getting from a config later
     integer :: xstart, xend, ystart, yend, nsoil
     
     xstart = noah_lsm%xstart
@@ -30,12 +32,13 @@ contains
     yend = noah_lsm%yend
     nsoil = noah_lsm%nsoil
     
-    ALLOCATE ( this%TSNOXY    (XSTART:XEND,-NSNOW+1:0,    YSTART:YEND), source = undefined_real )  ! snow temperature [K]
-    ALLOCATE ( this%ZSNSOXY   (XSTART:XEND,-NSNOW+1:NSOIL,YSTART:YEND), source = undefined_real )  ! snow layer depth [m]
-    ALLOCATE ( this%SNICEXY   (XSTART:XEND,-NSNOW+1:0,    YSTART:YEND), source = undefined_real )  ! snow layer ice [mm]
-    ALLOCATE ( this%SNLIQXY   (XSTART:XEND,-NSNOW+1:0,    YSTART:YEND), source = undefined_real )  ! snow layer liquid water [mm]
-    ALLOCATE ( this%SNOW      (XSTART:XEND,YSTART:YEND), source = undefined_real )  ! snow water equivalent [mm]
-    ALLOCATE ( this%SNOWH     (XSTART:XEND,YSTART:YEND), source = undefined_real )  ! physical snow depth [m]
+    allocate ( this%tsnoxy    (xstart:xend,-nsnow+1:0,    ystart:yend), source = undefined_real )  ! snow temperature [k]
+    allocate ( this%zsnsoxy   (xstart:xend,-nsnow+1:nsoil,ystart:yend), source = undefined_real )  ! snow layer depth [m]
+    allocate ( this%isnowxy   (xstart:xend,ystart:yend),  source = undefined_int )  ! actual no. of (variable) snow layers
+    allocate ( this%snicexy   (xstart:xend,-nsnow+1:0,    ystart:yend), source = undefined_real )  ! snow layer ice [mm]
+    allocate ( this%snliqxy   (xstart:xend,-nsnow+1:0,    ystart:yend), source = undefined_real )  ! snow layer liquid water [mm]
+    allocate ( this%snow      (xstart:xend,ystart:yend), source = undefined_real )  ! snow water equivalent [mm]
+    allocate ( this%snowh     (xstart:xend,ystart:yend), source = undefined_real )  ! physical snow depth [m]
     
   end subroutine init_undefined
 
