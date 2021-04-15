@@ -2,20 +2,20 @@
 !  Author(s)/Contact(s):
 !  Abstract:
 !  History Log:
-! 
+!
 !  Usage:
 !  Parameters: <Specify typical arguments passed>
 !  Input Files:
 !        <list file names and briefly describe the data they include>
 !  Output Files:
 !        <list file names and briefly describe the information they include>
-! 
+!
 !  Condition codes:
 !        <list exit condition or error codes returned >
 !        If appropriate, descriptive troubleshooting instructions or
 !        likely causes for failures could be mentioned here with the
 !        appropriate error code
-! 
+!
 !  User controllable options: <if applicable>
 
 MODULE module_sf_noahmpdrv
@@ -30,7 +30,7 @@ MODULE module_sf_noahmpdrv
 CONTAINS
 !
   SUBROUTINE noahmplsm(ITIMESTEP,        YR,   JULIAN,   COSZIN,   XLATIN,  & ! IN : Time/Space-related
-                  DZ8W,       DT,       DZS,    NSOIL,       DX,            & ! IN : Model configuration 
+                  DZ8W,       DT,       DZS,    NSOIL,       DX,            & ! IN : Model configuration
 	        IVGTYP,   ISLTYP,    VEGFRA,   VEGMAX,      TMN,            & ! IN : Vegetation/Soil characteristics
 		 XLAND,     XICE,XICE_THRES,                                & ! IN : Vegetation/Soil characteristics
                  IDVEG, IOPT_CRS,  IOPT_BTR, IOPT_RUN, IOPT_SFC, IOPT_FRZ,  & ! IN : User options
@@ -70,7 +70,7 @@ CONTAINS
                ids,ide,  jds,jde,  kds,kde,                    &
                ims,ime,  jms,jme,  kms,kme,                    &
                its,ite,  jts,jte,  kts,kte,                    &
-               MP_RAINC, MP_RAINNC, MP_SHCV, MP_SNOW, MP_GRAUP, MP_HAIL  &    
+               MP_RAINC, MP_RAINNC, MP_SHCV, MP_SNOW, MP_GRAUP, MP_HAIL  &
 #ifdef WRF_HYDRO
                , ACCPRCP,  ACCECAN, ACCETRAN,   ACCEDIR        &         ! NEW output accumulator variables
                , SOILSAT_TOP, SOILSAT, SOILICE, SNOWT_AVG      &         ! NEW soil saturation and snow temp
@@ -104,7 +104,7 @@ CONTAINS
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(IN   ) ::  XLAND     ! =2 ocean; =1 land/seaice
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(IN   ) ::  XICE      ! fraction of grid that is seaice
     REAL,                                            INTENT(IN   ) ::  XICE_THRES! fraction of grid determining seaice
-    INTEGER,                                         INTENT(IN   ) ::  IDVEG     ! dynamic vegetation (1 -> off ; 2 -> on) with opt_crs = 1      
+    INTEGER,                                         INTENT(IN   ) ::  IDVEG     ! dynamic vegetation (1 -> off ; 2 -> on) with opt_crs = 1
     INTEGER,                                         INTENT(IN   ) ::  IOPT_CRS  ! canopy stomatal resistance (1-> Ball-Berry; 2->Jarvis)
     INTEGER,                                         INTENT(IN   ) ::  IOPT_BTR  ! soil moisture factor for stomatal resistance (1-> Noah; 2-> CLM; 3-> SSiB)
     INTEGER,                                         INTENT(IN   ) ::  IOPT_RUN  ! runoff and groundwater (1->SIMGM; 2->SIMTOP; 3->Schaake96; 4->BATS)
@@ -225,7 +225,7 @@ CONTAINS
     REAL,    DIMENSION( ims:ime, 1:nsoil, jms:jme ), INTENT(INOUT) ::  SMOISEQ   ! eq volumetric soil moisture [m3/m3]
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  SMCWTDXY  ! soil moisture content in the layer to the water table when deep
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  DEEPRECHXY ! recharge to the water table when deep
-    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  RECHXY    ! recharge to the water table (diagnostic) 
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(INOUT) ::  RECHXY    ! recharge to the water table (diagnostic)
 
 ! OUT (with no Noah LSM equivalent)
 
@@ -271,10 +271,10 @@ CONTAINS
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  IRBXY     ! bare net longwave rad. [w/m2] [+ to atm]
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  TRXY      ! transpiration [w/m2]  [+ to atm]
     REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  EVCXY     ! canopy evaporation heat [w/m2]  [+ to atm]
-    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  CHLEAFXY  ! leaf exchange coefficient 
-    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  CHUCXY    ! under canopy exchange coefficient 
-    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  CHV2XY    ! veg 2m exchange coefficient 
-    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  CHB2XY    ! bare 2m exchange coefficient 
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  CHLEAFXY  ! leaf exchange coefficient
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  CHUCXY    ! under canopy exchange coefficient
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  CHV2XY    ! veg 2m exchange coefficient
+    REAL,    DIMENSION( ims:ime,          jms:jme ), INTENT(OUT  ) ::  CHB2XY    ! bare 2m exchange coefficient
     INTEGER,  INTENT(IN   )   ::     ids,ide, jds,jde, kds,kde,  &  ! d -> domain
          &                           ims,ime, jms,jme, kms,kme,  &  ! m -> memory
          &                           its,ite, jts,jte, kts,kte      ! t -> tile
@@ -323,7 +323,7 @@ CONTAINS
 ! INOUT (with generic LSM equivalent)
 
     REAL                                :: FSH          ! total sensible heat (w/m2) [+ to atm]
-    REAL                                :: SSOIL        ! soil heat heat (w/m2) 
+    REAL                                :: SSOIL        ! soil heat heat (w/m2)
     REAL                                :: SALB         ! surface albedo (-)
     REAL                                :: FSNO         ! snow cover fraction (-)
     REAL,   DIMENSION( 1:NSOIL)         :: SMCEQ        ! eq vol. soil moisture (m3/m3)
@@ -357,7 +357,7 @@ CONTAINS
     REAL                                :: WT           ! groundwater storage [mm]
     REAL                                :: SMCWTD       ! soil moisture content in the layer to the water table when deep
     REAL                                :: DEEPRECH     ! recharge to the water table when deep
-    REAL                                :: RECH         ! recharge to the water table (diagnostic)  
+    REAL                                :: RECH         ! recharge to the water table (diagnostic)
     REAL, DIMENSION(-2:NSOIL)           :: ZSNSO        ! snow layer depth [m]
     REAL, DIMENSION(-2:              0) :: SNICE        ! snow layer ice [mm]
     REAL, DIMENSION(-2:              0) :: SNLIQ        ! snow layer liquid water [mm]
@@ -422,10 +422,10 @@ CONTAINS
     REAL                                :: GHB          ! bare ground heat flux [w/m2] [+ to soil]
     REAL                                :: TR           ! transpiration [w/m2]  [+ to atm]
     REAL                                :: EVC          ! canopy evaporation heat [w/m2]  [+ to atm]
-    REAL                                :: CHLEAF       ! leaf exchange coefficient 
-    REAL                                :: CHUC         ! under canopy exchange coefficient 
-    REAL                                :: CHV2         ! veg 2m exchange coefficient 
-    REAL                                :: CHB2         ! bare 2m exchange coefficient 
+    REAL                                :: CHLEAF       ! leaf exchange coefficient
+    REAL                                :: CHUC         ! under canopy exchange coefficient
+    REAL                                :: CHV2         ! veg 2m exchange coefficient
+    REAL                                :: CHB2         ! bare 2m exchange coefficient
   REAL   :: PAHV    !precipitation advected heat - vegetation net (W/m2)
   REAL   :: PAHG    !precipitation advected heat - under canopy net (W/m2)
   REAL   :: PAHB    !precipitation advected heat - bare ground net (W/m2)
@@ -536,7 +536,7 @@ CONTAINS
 
        IF((XLAND(I,J)-1.5) >= 0.) CYCLE ILOOP   ! Open water case
 
-!     2D to 1D       
+!     2D to 1D
 
 ! IN only
 
@@ -574,7 +574,7 @@ CONTAINS
          PRCPOTHR  = PRCP - PRCPCONV - PRCPNONC - PRCPSHCV ! take care of other (fog) contained in rainbl
 	 PRCPOTHR  = MAX(0.0,PRCPOTHR)
 	 PRCPNONC  = PRCPNONC + PRCPOTHR
-         PRCPSNOW  = PRCPSNOW + SR(I,J)  * PRCPOTHR 
+         PRCPSNOW  = PRCPSNOW + SR(I,J)  * PRCPOTHR
        ELSE
          PRCPCONV  = 0.
          PRCPNONC  = PRCP
@@ -662,7 +662,7 @@ CONTAINS
        parameters%rsurf_exp = RSURFEXP_2D(I,J)    ! exponent in the shape parameter for soil resistance option 1
 #endif
        CALL TRANSFER_MP_PARAMETERS(VEGTYP,SOILTYP,SLOPETYP,SOILCOLOR,CROPTYPE,parameters)
-       
+
        GRAIN = 0.0                ! mass of grain [g/m2]
        GDD   = 0.0                ! growing degree days
        PGS   = 0                  ! crop growth stage
@@ -672,7 +672,7 @@ CONTAINS
        else
          parameters%hvb = 0.0
        endif
-       
+
        !ADCHANGE: Add some sanity checks in case calibration knocks the order of these out of sequence.
        !The min diffs were pulled from the existing SOILPARM.TBL defaults.
        !Currently water is 0, so enforcing 0 as the absolute min.
@@ -684,7 +684,7 @@ CONTAINS
 ! Initialized local
 
        FICEOLD = 0.0
-       FICEOLD(ISNOW+1:0) = SNICEXY(I,ISNOW+1:0,J) &  ! snow ice fraction  
+       FICEOLD(ISNOW+1:0) = SNICEXY(I,ISNOW+1:0,J) &  ! snow ice fraction
            /(SNICEXY(I,ISNOW+1:0,J)+SNLIQXY(I,ISNOW+1:0,J))
        CO2PP  = CO2_TABLE * P_ML                      ! partial pressure co2 [Pa]
        O2PP   = O2_TABLE  * P_ML                      ! partial pressure  o2 [Pa]
@@ -694,7 +694,7 @@ CONTAINS
        DZ8W1D = DZ8W (I,1,J)                          ! thickness of atmospheric layers
 
        IF(VEGTYP == 25) FVEG = 0.0                  ! Set playa, lava, sand to bare
-       IF(VEGTYP == 25) PLAI = 0.0 
+       IF(VEGTYP == 25) PLAI = 0.0
        IF(VEGTYP == 26) FVEG = 0.0                  ! hard coded for USGS
        IF(VEGTYP == 26) PLAI = 0.0
        IF(VEGTYP == 27) FVEG = 0.0
@@ -703,7 +703,7 @@ CONTAINS
        IF ( VEGTYP == ISICE_TABLE ) THEN
          ICE = -1                           ! Land-ice point
          CALL NOAHMP_OPTIONS_GLACIER(IOPT_ALB  ,IOPT_SNF  ,IOPT_TBOT, IOPT_STC, IOPT_GLA )
-      
+
          TBOT = MIN(TBOT,263.15)                      ! set deep temp to at most -10C
          CALL NOAHMP_GLACIER(     I,       J,    COSZ,   NSNOW,   NSOIL,      DT, & ! IN : Time/Space/Model-related
                                T_ML,    P_ML,    U_ML,    V_ML,    Q_ML,    SWDN, & ! IN : Forcing
@@ -711,7 +711,7 @@ CONTAINS
                               QSNOW, QRAIN, SNEQVO,  ALBOLD,   CM,   CH,   ISNOW, & ! IN/OUT :
                                 SWE,     SMC,   ZSNSO,  SNDPTH,   SNICE,   SNLIQ, & ! IN/OUT :
                                  TG,     STC,   SMH2O,   TAUSS,  QSFC1D,          & ! IN/OUT :
-                                FSA,     FSR,    FIRA,     FSH,    FGEV,   SSOIL, & ! OUT : 
+                                FSA,     FSR,    FIRA,     FSH,    FGEV,   SSOIL, & ! OUT :
                                TRAD,   ESOIL,   RUNSF,   RUNSB,     SAG,    SALB, & ! OUT :
                               QSNBOT,PONDING,PONDING1,PONDING2,    T2MB,    Q2MB, & ! OUT :
 			      EMISSI,  FPICE,    CHB2 &                             ! OUT :
@@ -720,61 +720,61 @@ CONTAINS
 #endif
                               )
 
-         FSNO   = 1.0       
+         FSNO   = 1.0
          TV     = undefined_value     ! Output from standard Noah-MP undefined for glacier points
-         TGB    = TG 
-         CANICE = undefined_value 
-         CANLIQ = undefined_value 
-         EAH    = undefined_value 
+         TGB    = TG
+         CANICE = undefined_value
+         CANLIQ = undefined_value
+         EAH    = undefined_value
          TAH    = undefined_value
-         FWET   = undefined_value 
-         WSLAKE = undefined_value 
-         ZWT    = undefined_value 
-         WA     = undefined_value 
-         WT     = undefined_value 
-         LFMASS = undefined_value 
-         RTMASS = undefined_value 
-         STMASS = undefined_value 
-         WOOD   = undefined_value 
-         STBLCP = undefined_value 
-         FASTCP = undefined_value 
-         PLAI   = undefined_value 
-         PSAI   = undefined_value 
-         T2MV   = undefined_value 
-         Q2MV   = undefined_value 
-         NEE    = undefined_value 
-         GPP    = undefined_value 
-         NPP    = undefined_value 
-         FVEGMP = 0.0 
-         ECAN   = undefined_value 
-         ETRAN  = undefined_value 
-         APAR   = undefined_value 
-         PSN    = undefined_value 
-         SAV    = undefined_value 
-         RSSUN  = undefined_value 
-         RSSHA  = undefined_value 
-         BGAP   = undefined_value 
-         WGAP   = undefined_value 
+         FWET   = undefined_value
+         WSLAKE = undefined_value
+         ZWT    = undefined_value
+         WA     = undefined_value
+         WT     = undefined_value
+         LFMASS = undefined_value
+         RTMASS = undefined_value
+         STMASS = undefined_value
+         WOOD   = undefined_value
+         STBLCP = undefined_value
+         FASTCP = undefined_value
+         PLAI   = undefined_value
+         PSAI   = undefined_value
+         T2MV   = undefined_value
+         Q2MV   = undefined_value
+         NEE    = undefined_value
+         GPP    = undefined_value
+         NPP    = undefined_value
+         FVEGMP = 0.0
+         ECAN   = undefined_value
+         ETRAN  = undefined_value
+         APAR   = undefined_value
+         PSN    = undefined_value
+         SAV    = undefined_value
+         RSSUN  = undefined_value
+         RSSHA  = undefined_value
+         BGAP   = undefined_value
+         WGAP   = undefined_value
          TGV    = undefined_value
-         CHV    = undefined_value 
-         CHB    = CH 
-         IRC    = undefined_value 
-         IRG    = undefined_value 
-         SHC    = undefined_value 
-         SHG    = undefined_value 
-         EVG    = undefined_value 
-         GHV    = undefined_value 
+         CHV    = undefined_value
+         CHB    = CH
+         IRC    = undefined_value
+         IRG    = undefined_value
+         SHC    = undefined_value
+         SHG    = undefined_value
+         EVG    = undefined_value
+         GHV    = undefined_value
          IRB    = FIRA
          SHB    = FSH
          EVB    = FGEV
          GHB    = SSOIL
-         TR     = undefined_value 
-         EVC    = undefined_value 
-         CHLEAF = undefined_value 
-         CHUC   = undefined_value 
-         CHV2   = undefined_value 
-         FCEV   = undefined_value 
-         FCTR   = undefined_value        
+         TR     = undefined_value
+         EVC    = undefined_value
+         CHLEAF = undefined_value
+         CHUC   = undefined_value
+         CHV2   = undefined_value
+         FCEV   = undefined_value
+         FCTR   = undefined_value
          Z0WRF  = 0.002
          QFX(I,J) = ESOIL
          LH (I,J) = FGEV
@@ -784,50 +784,50 @@ CONTAINS
          ICE=0                              ! Neither sea ice or land ice.
          CALL NOAHMP_SFLX (parameters, &
             I       , J       , LAT     , YEARLEN , JULIAN  , COSZ    , & ! IN : Time/Space-related
-            DT      , DX      , DZ8W1D  , NSOIL   , ZSOIL   , NSNOW   , & ! IN : Model configuration 
+            DT      , DX      , DZ8W1D  , NSOIL   , ZSOIL   , NSNOW   , & ! IN : Model configuration
             FVEG    , FVGMAX  , VEGTYP  , ICE     , IST     , CROPTYPE, & ! IN : Vegetation/Soil characteristics
             SMCEQ   ,                                                   & ! IN : Vegetation/Soil characteristics
             T_ML    , P_ML    , PSFC    , U_ML    , V_ML    , Q_ML    , & ! IN : Forcing
             QC      , SWDN    , LWDN    ,                               & ! IN : Forcing
 	    PRCPCONV, PRCPNONC, PRCPSHCV, PRCPSNOW, PRCPGRPL, PRCPHAIL, & ! IN : Forcing
             TBOT    , CO2PP   , O2PP    , FOLN    , FICEOLD , Z_ML    , & ! IN : Forcing
-            ALBOLD  , SNEQVO  ,                                         & ! IN/OUT : 
-            STC     , SMH2O   , SMC     , TAH     , EAH     , FWET    , & ! IN/OUT : 
-            CANLIQ  , CANICE  , TV      , TG    , QSFC1D, QSNOW, QRAIN, & ! IN/OUT : 
-            ISNOW   , ZSNSO   , SNDPTH  , SWE     , SNICE   , SNLIQ   , & ! IN/OUT : 
-            ZWT     , WA      , WT      , WSLAKE  , LFMASS  , RTMASS  , & ! IN/OUT : 
-            STMASS  , WOOD    , STBLCP  , FASTCP  , PLAI    , PSAI    , & ! IN/OUT : 
-            CM      , CH      , TAUSS   ,                               & ! IN/OUT : 
-            GRAIN   , GDD     , PGS     ,                               & ! IN/OUT 
+            ALBOLD  , SNEQVO  ,                                         & ! IN/OUT :
+            STC     , SMH2O   , SMC     , TAH     , EAH     , FWET    , & ! IN/OUT :
+            CANLIQ  , CANICE  , TV      , TG    , QSFC1D, QSNOW, QRAIN, & ! IN/OUT :
+            ISNOW   , ZSNSO   , SNDPTH  , SWE     , SNICE   , SNLIQ   , & ! IN/OUT :
+            ZWT     , WA      , WT      , WSLAKE  , LFMASS  , RTMASS  , & ! IN/OUT :
+            STMASS  , WOOD    , STBLCP  , FASTCP  , PLAI    , PSAI    , & ! IN/OUT :
+            CM      , CH      , TAUSS   ,                               & ! IN/OUT :
+            GRAIN   , GDD     , PGS     ,                               & ! IN/OUT
             SMCWTD  ,DEEPRECH , RECH    ,                               & ! IN/OUT :
             Z0WRF   ,                                                   &
-            FSA     , FSR     , FIRA    , FSH     , SSOIL   , FCEV    , & ! OUT : 
-            FGEV    , FCTR    , ECAN    , ETRAN   , ESOIL   , TRAD    , & ! OUT : 
-            TGB     , TGV     , T2MV    , T2MB    , Q2MV    , Q2MB    , & ! OUT : 
-            RUNSF   , RUNSB   , APAR    , PSN     , SAV     , SAG     , & ! OUT : 
-            FSNO    , NEE     , GPP     , NPP     , FVEGMP  , SALB    , & ! OUT : 
-            QSNBOT  , PONDING , PONDING1, PONDING2, RSSUN   , RSSHA   , & ! OUT : 
+            FSA     , FSR     , FIRA    , FSH     , SSOIL   , FCEV    , & ! OUT :
+            FGEV    , FCTR    , ECAN    , ETRAN   , ESOIL   , TRAD    , & ! OUT :
+            TGB     , TGV     , T2MV    , T2MB    , Q2MV    , Q2MB    , & ! OUT :
+            RUNSF   , RUNSB   , APAR    , PSN     , SAV     , SAG     , & ! OUT :
+            FSNO    , NEE     , GPP     , NPP     , FVEGMP  , SALB    , & ! OUT :
+            QSNBOT  , PONDING , PONDING1, PONDING2, RSSUN   , RSSHA   , & ! OUT :
             ALBSND  , ALBSNI  ,                                         & ! OUT :
-            BGAP    , WGAP    , CHV     , CHB     , EMISSI  ,           & ! OUT : 
+            BGAP    , WGAP    , CHV     , CHB     , EMISSI  ,           & ! OUT :
             SHG     , SHC     , SHB     , EVG     , EVB     , GHV     , & ! OUT :
 	    GHB     , IRG     , IRC     , IRB     , TR      , EVC     , & ! OUT :
-	    CHLEAF  , CHUC    , CHV2    , CHB2    , FPICE   , PAHV    , & 
+	    CHLEAF  , CHUC    , CHV2    , CHB2    , FPICE   , PAHV    , &
             PAHG    , PAHB    , PAH     , LAISUN  , LAISHA  , RB        &
 #ifdef WRF_HYDRO
             , sfcheadrt(i,j)                               &
 #endif
             )            ! OUT :
-                  
+
             QFX(I,J) = ECAN + ESOIL + ETRAN
             LH       (I,J)                = FCEV + FGEV + FCTR
 
-   ENDIF ! glacial split ends 
+   ENDIF ! glacial split ends
 
 #ifdef WRF_HYDRO
 
 !---LPR Attention: lpr added this part 2013-09-04 below to avoid restart NaN values----
 !----------------- which may cause the RAPID crash--------------------------
-!yw    if(isnan(RUNSF)) then 
+!yw    if(isnan(RUNSF)) then
      if((RUNSF+1.0) .eq. RUNSF) then
          RUNSF   = 0
          RUNSB   = 0
@@ -1009,9 +1009,9 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
   INTEGER, INTENT(IN)    :: SLOPETYPE
   INTEGER, INTENT(IN)    :: SOILCOLOR
   INTEGER, INTENT(IN)    :: CROPTYPE
-    
+
   type (noahmp_parameters), intent(inout) :: parameters
-    
+
   REAL    :: REFDK
   REAL    :: REFKDT
   REAL    :: FRZK
@@ -1046,7 +1046,7 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
   parameters%SLA    =    SLA_TABLE(VEGTYPE)       !single-side leaf area per Kg [m2/kg]
   parameters%DILEFC = DILEFC_TABLE(VEGTYPE)       !coeficient for leaf stress death [1/s]
   parameters%DILEFW = DILEFW_TABLE(VEGTYPE)       !coeficient for leaf stress death [1/s]
-  parameters%FRAGR  =  FRAGR_TABLE(VEGTYPE)       !fraction of growth respiration  !original was 0.3 
+  parameters%FRAGR  =  FRAGR_TABLE(VEGTYPE)       !fraction of growth respiration  !original was 0.3
   parameters%LTOVRC = LTOVRC_TABLE(VEGTYPE)       !leaf turnover [1/s]
 
   parameters%C3PSN  =  C3PSN_TABLE(VEGTYPE)       !photosynthetic pathway: 0. = c4, 1. = c3
@@ -1094,7 +1094,7 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
    parameters%ALBSAT    = ALBSAT_TABLE(SOILCOLOR,:)
    parameters%ALBDRY    = ALBDRY_TABLE(SOILCOLOR,:)
    parameters%ALBICE    = ALBICE_TABLE
-   parameters%ALBLAK    = ALBLAK_TABLE               
+   parameters%ALBLAK    = ALBLAK_TABLE
    parameters%OMEGAS    = OMEGAS_TABLE
    parameters%BETADS    = BETADS_TABLE
    parameters%BETAIS    = BETAIS_TABLE
@@ -1112,12 +1112,12 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
    parameters%GDDTBASE  =  GDDTBASE_TABLE(CROPTYPE)    ! Base temperature for GDD accumulation [C]
    parameters%GDDTCUT   =   GDDTCUT_TABLE(CROPTYPE)    ! Upper temperature for GDD accumulation [C]
    parameters%GDDS1     =     GDDS1_TABLE(CROPTYPE)    ! GDD from seeding to emergence
-   parameters%GDDS2     =     GDDS2_TABLE(CROPTYPE)    ! GDD from seeding to initial vegetative 
-   parameters%GDDS3     =     GDDS3_TABLE(CROPTYPE)    ! GDD from seeding to post vegetative 
+   parameters%GDDS2     =     GDDS2_TABLE(CROPTYPE)    ! GDD from seeding to initial vegetative
+   parameters%GDDS3     =     GDDS3_TABLE(CROPTYPE)    ! GDD from seeding to post vegetative
    parameters%GDDS4     =     GDDS4_TABLE(CROPTYPE)    ! GDD from seeding to intial reproductive
-   parameters%GDDS5     =     GDDS5_TABLE(CROPTYPE)    ! GDD from seeding to pysical maturity 
+   parameters%GDDS5     =     GDDS5_TABLE(CROPTYPE)    ! GDD from seeding to pysical maturity
    parameters%C3C4      =      C3C4_TABLE(CROPTYPE)    ! photosynthetic pathway:  1. = c3 2. = c4
-   parameters%AREF      =      AREF_TABLE(CROPTYPE)    ! reference maximum CO2 assimulation rate 
+   parameters%AREF      =      AREF_TABLE(CROPTYPE)    ! reference maximum CO2 assimulation rate
    parameters%PSNRF     =     PSNRF_TABLE(CROPTYPE)    ! CO2 assimulation reduction factor(0-1) (caused by non-modeling part,e.g.pest,weeds)
    parameters%I2PAR     =     I2PAR_TABLE(CROPTYPE)    ! Fraction of incoming solar radiation to photosynthetically active radiation
    parameters%TASSIM0   =   TASSIM0_TABLE(CROPTYPE)    ! Minimum temperature for CO2 assimulation [C]
@@ -1155,7 +1155,7 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
    parameters%FSATMX     =      FSATMX_TABLE
    parameters%Z0SNO      =       Z0SNO_TABLE
    parameters%SSI        =         SSI_TABLE
-   parameters%SNOW_RET_FAC =  SNOW_RET_FAC_TABLE    
+   parameters%SNOW_RET_FAC =  SNOW_RET_FAC_TABLE
    parameters%SWEMX      =       SWEMX_TABLE
    parameters%TAU0         =      TAU0_TABLE
    parameters%GRAIN_GROWTH = GRAIN_GROWTH_TABLE
@@ -1207,10 +1207,10 @@ SUBROUTINE TRANSFER_MP_PARAMETERS(VEGTYPE,SOILTYPE,SLOPETYPE,SOILCOLOR,CROPTYPE,
     parameters%KDT    = parameters%REFKDT * parameters%DKSAT(1) / parameters%REFDK
 
     IF(parameters%URBAN_FLAG)THEN  ! Hardcoding some urban parameters for soil
-       parameters%SMCMAX = 0.45 
-       parameters%SMCREF = 0.42 
-       parameters%SMCWLT = 0.40 
-       parameters%SMCDRY = 0.40 
+       parameters%SMCMAX = 0.45
+       parameters%SMCREF = 0.42
+       parameters%SMCWLT = 0.40
+       parameters%SMCDRY = 0.40
        parameters%CSOIL  = 3.E6
     ENDIF
 
@@ -1227,14 +1227,14 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
 
   use module_sf_noahmplsm
   use noahmp_tables
-        
+
   implicit none
-        
+
   integer,                    intent(in   ) :: nsoil     ! number of soil layers
   real, dimension( 1:nsoil ), intent(inout) :: sand
   real, dimension( 1:nsoil ), intent(inout) :: clay
   real, dimension( 1:nsoil ), intent(inout) :: orgm
-    
+
   real, dimension( 1:nsoil ) :: theta_1500t
   real, dimension( 1:nsoil ) :: theta_1500
   real, dimension( 1:nsoil ) :: theta_33t
@@ -1243,7 +1243,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
   real, dimension( 1:nsoil ) :: theta_s33
   real, dimension( 1:nsoil ) :: psi_et
   real, dimension( 1:nsoil ) :: psi_e
-    
+
   type(noahmp_parameters), intent(inout) :: parameters
   integer :: k
 
@@ -1254,7 +1254,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
     end if
     if(orgm(k) <= 0 ) orgm(k) = 0.0
   end do
-        
+
   theta_1500t =   sr2006_theta_1500t_a*sand       &
                 + sr2006_theta_1500t_b*clay       &
                 + sr2006_theta_1500t_c*orgm       &
@@ -1299,12 +1299,12 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
                 + sr2006_psi_et_e*clay*theta_s33 &
                 + sr2006_psi_et_f*sand*clay      &
                 + sr2006_psi_et_g
- 
+
   psi_e       =   psi_et                        &
                 + sr2006_psi_e_a*psi_et*psi_et  &
                 + sr2006_psi_e_b*psi_et         &
                 + sr2006_psi_e_c
-    
+
   parameters%smcwlt = theta_1500
   parameters%smcref = theta_33
   parameters%smcmax =   theta_33    &
@@ -1316,17 +1316,17 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
   parameters%psisat = psi_e
   parameters%dksat  = 1930.0 * (parameters%smcmax - theta_33) ** (3.0 - 1.0/parameters%bexp)
   parameters%quartz = sand
-    
+
 ! Units conversion
-    
+
   parameters%psisat = max(0.1,parameters%psisat)     ! arbitrarily impose a limit of 0.1kpa
   parameters%psisat = 0.101997 * parameters%psisat   ! convert kpa to m
   parameters%dksat  = parameters%dksat / 3600000.0   ! convert mm/h to m/s
   parameters%dwsat  = parameters%dksat * parameters%psisat *parameters%bexp / parameters%smcmax  ! units should be m*m/s
   parameters%smcdry = parameters%smcwlt
-  
+
 ! Introducing somewhat arbitrary limits (based on SOILPARM) to prevent bad things
-  
+
   parameters%smcmax = max(0.32 ,min(parameters%smcmax,             0.50 ))
   parameters%smcref = max(0.17 ,min(parameters%smcref,parameters%smcmax ))
   parameters%smcwlt = max(0.01 ,min(parameters%smcwlt,parameters%smcref ))
@@ -1336,7 +1336,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
   parameters%dksat  = max(5.e-7,min(parameters%dksat,              1.e-5))
   parameters%dwsat  = max(1.e-6,min(parameters%dwsat,              3.e-5))
   parameters%quartz = max(0.05 ,min(parameters%quartz,             0.95 ))
-    
+
  END SUBROUTINE PEDOTRANSFER_SR2006
 
   SUBROUTINE NOAHMP_INIT ( MMINLU, SNOW , SNOWH , CANWAT , ISLTYP ,   IVGTYP, &
@@ -1348,7 +1348,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
        stmassxy ,woodxy   ,stblcpxy ,fastcpxy ,xsaixy   ,lai      ,           &
 !jref:start
        t2mvxy   ,t2mbxy   ,chstarxy,            &
-!jref:end       
+!jref:end
        NSOIL, restart,                 &
        allowed_to_read , iopt_run, iopt_crop, iopt_pedo,   &
        ids,ide, jds,jde, kds,kde,                &
@@ -1454,7 +1454,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
 !jref:end
 
 
-    REAL, DIMENSION(1:NSOIL)  :: ZSOIL      ! Depth of the soil layer bottom (m) from 
+    REAL, DIMENSION(1:NSOIL)  :: ZSOIL      ! Depth of the soil layer bottom (m) from
     !                                                   the surface (negative)
 
     REAL                      :: BEXP, SMCMAX, PSISAT
@@ -1537,7 +1537,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
 		SNOW(I,J) = MAX(SNOW(I,J), 10.0)        ! set SWE to at least 10mm
                 SNOWH(I,J)=SNOW(I,J)*0.01               ! SNOW in mm and SNOWH in m
 	    ELSE
-	      
+
               BEXP   =   BEXP_TABLE(ISLTYP(I,J))
               SMCMAX = SMCMAX_TABLE(ISLTYP(I,J))
               PSISAT = PSISAT_TABLE(ISLTYP(I,J))
@@ -1576,7 +1576,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
              CANWAT     (I,J) = 0.0
              canliqxy   (I,J) = CANWAT(I,J)
              canicexy   (I,J) = 0.
-             eahxy      (I,J) = 2000. 
+             eahxy      (I,J) = 2000.
              tahxy      (I,J) = TSK(I,J)
 	       if(snow(i,j) > 0.0 .and. tsk(i,j) > 273.15) tahxy(I,J) = 273.15
 !             tahxy      (I,J) = 287.
@@ -1596,7 +1596,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
              qsnowxy    (I,J) = 0.0
              wslakexy   (I,J) = 0.0
 
-             if(iopt_run.ne.5) then 
+             if(iopt_run.ne.5) then
                    waxy       (I,J) = 4900.                                       !???
                    wtxy       (I,J) = waxy(i,j)                                   !???
                    zwtxy      (I,J) = (25. + 2.0) - waxy(i,j)/1000/0.2            !???
@@ -1608,7 +1608,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
 
            IF(IVGTYP(I,J) == ISBARREN_TABLE .OR. IVGTYP(I,J) == ISICE_TABLE .OR. &
 	      IVGTYP(I,J) == ISURBAN_TABLE  .OR. IVGTYP(I,J) == ISWATER_TABLE ) THEN
-	     
+
 	     lai        (I,J) = 0.0
              xsaixy     (I,J) = 0.0
              lfmassxy   (I,J) = 0.0
@@ -1619,7 +1619,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
              fastcpxy   (I,J) = 0.0
 
 	   ELSE
-	     
+
 	     lai        (I,J) = max(lai(i,j),0.05)             ! at least start with 0.05 for arbitrary initialization (v3.7)
              xsaixy     (I,J) = max(0.1*lai(I,J),0.05)         ! MB: arbitrarily initialize SAI using input LAI (v3.7)
              masslai = 1000. / max(SLA_TABLE(IVGTYP(I,J)),1.0) ! conversion from lai to mass  (v3.7)
@@ -1643,7 +1643,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
           ZSOIL(NS)       = ZSOIL(NS-1) - DZS(NS)
        END DO
 
-       ! Initialize snow/soil layer arrays ZSNSOXY, TSNOXY, SNICEXY, SNLIQXY, 
+       ! Initialize snow/soil layer arrays ZSNSOXY, TSNOXY, SNICEXY, SNLIQXY,
        ! and ISNOWXY
        CALL snow_init ( ims , ime , jms , jme , its , itf , jts , jtf , 3 , &
             &           NSOIL , zsoil , snow , tgxy , snowh ,     &
@@ -1677,7 +1677,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
              STEPWTD = nint(WTDDT*60./DT)
              STEPWTD = max(STEPWTD,1)
 
-              CALL groundwater_init ( & 
+              CALL groundwater_init ( &
       &       nsoil, zsoil , dzs  ,isltyp, ivgtyp,wtddt , &
       &       fdepthxy, ht, riverbedxy, eqzwt, rivercondxy, pexpxy , areaxy, zwtxy,   &
       &       smois,sh2o, smoiseq, smcwtdxy, deeprechxy, rechxy, qslatxy, qrfsxy, qspringsxy, &
@@ -1703,11 +1703,11 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
 !   Initialize snow arrays for Noah-MP LSM, based in input SNOWDEP, NSNOW
 !   ISNOWXY is an index array, indicating the index of the top snow layer.  Valid indices
 !           for snow layers range from 0 (no snow) and -1 (shallow snow) to (-NSNOW)+1 (deep snow).
-!   TSNOXY holds the temperature of the snow layer.  Snow layers are initialized with 
+!   TSNOXY holds the temperature of the snow layer.  Snow layers are initialized with
 !          temperature = ground temperature [?].  Snow-free levels in the array have value 0.0
 !   SNICEXY is the frozen content of a snow layer.  Initial estimate based on SNODEP and SWE
 !   SNLIQXY is the liquid content of a snow layer.  Initialized to 0.0
-!   ZNSNOXY is the layer depth from the surface.  
+!   ZNSNOXY is the layer depth from the surface.
 !------------------------------------------------------------------------------------------
     IMPLICIT NONE
 !------------------------------------------------------------------------------------------
@@ -1715,7 +1715,7 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
     INTEGER, INTENT(IN)                              :: its, itf, jts, jtf
     INTEGER, INTENT(IN)                              :: NSNOW
     INTEGER, INTENT(IN)                              :: NSOIL
-    REAL,    INTENT(IN), DIMENSION(ims:ime, jms:jme) :: SWE 
+    REAL,    INTENT(IN), DIMENSION(ims:ime, jms:jme) :: SWE
     REAL,    INTENT(IN), DIMENSION(ims:ime, jms:jme) :: SNODEP
     REAL,    INTENT(IN), DIMENSION(ims:ime, jms:jme) :: TGXY
     REAL,    INTENT(IN), DIMENSION(1:NSOIL)          :: ZSOIL
@@ -1800,7 +1800,49 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
 
 ! -----------------------------------------------------------------------------
 
-subroutine snow_update(state) ! (n, t, dsneqv, dsnowh)
+subroutine snow_update( &
+     state, &
+     bexp_3d, smcmax_3d, psisat_3d, &
+     smcxy, sh2oxy, &
+     t2xy)
+! This routine provides a loop over the grid and calls the "inner" update procedure
+! which actually does the update.
+! All return values/updates are in the state_type (state) data structure.
+use state_module, only: state_type
+use config_base, only: noah_lsm
+
+implicit none
+
+type(state_type), intent(inout)    :: state      ! Variables to update are in this structure
+real, dimension(:,:,:), intent(in) :: bexp_3d    ! C-H B exponent
+real, dimension(:,:,:), intent(in) :: smcmax_3d  ! Soil Moisture Limit: Max
+real, dimension(:,:,:), intent(in) :: psisat_3d  ! Saturated Matric Potential
+real, dimension(:,:,:), intent(in) :: smcxy      ! aka smois: layered vol. soil moisture content [-]
+real, dimension(:,:,:), intent(in) :: sh2oxy     ! layered liquid vol. soil moisture content [-]
+real, dimension(:,:),   intent(in) :: t2xy       ! 2m air temp from previous forcing
+
+integer :: ii, jj
+
+do jj = noah_lsm%ystart, noah_lsm%yend
+   do ii = noah_lsm%xstart, noah_lsm%xend
+      call snow_update_inner( &
+           ii, jj, &
+           state, bexp_3d, smcmax_3d, psisat_3d, &
+           smcxy, sh2oxy, &
+           t2xy)
+   end do
+end do
+
+print*, 'finnished snow_update'
+end subroutine snow_update
+
+
+subroutine snow_update_inner( &
+     ii, jj, &
+     state, &
+     bexp_3d, smcmax_3d, psisat_3d, &
+     smcxy, sh2oxy, &
+     t2xy)
 ! Adapted from
 ! https://github.com/NASA-LIS/LISF/blob/master/lis/surfacemodels/land/noahmp.4.0.1/da_snow/noahmp401_snow_update.F90
 ! REVISION HISTORY:
@@ -1821,18 +1863,26 @@ subroutine snow_update(state) ! (n, t, dsneqv, dsnowh)
 ! use NoahMP401_lsmMod
 ! use module_sf_noahmplsm_401
 ! use noahmp_tables_401
-use module_sf_noahmplsm, only: noahmp_parameters
+use module_sf_noahmplsm, only: combine, compact, divide
 use state_module, only: state_type
 use config_base, only: noah_lsm
+use module_sf_noahmplsm, only: noahmp_parameters
 
 implicit none
 
-!ARGUMENTS:
-type(state_type), intent(inout) :: state
-! integer, intent(in)  :: n
-!integer, intent(in)  :: t
-!real                 :: dsneqv !mm
-!real                 :: dsnowh !m
+integer, intent(in)  :: ii
+integer, intent(in)  :: jj
+type(state_type), intent(inout)    :: state
+real, dimension(:,:,:), intent(in) :: bexp_3d    ! C-H B exponent
+real, dimension(:,:,:), intent(in) :: smcmax_3d  ! Soil Moisture Limit: Max
+real, dimension(:,:,:), intent(in) :: psisat_3d  ! Saturated Matric Potential
+real, dimension(:,:,:), intent(in) :: smcxy      ! aka smois: layered vol. soil moisture content [-]
+real, dimension(:,:,:), intent(in) :: sh2oxy     ! layered liquid vol. soil moisture content [-]
+real, dimension(:,:), intent(in) :: t2xy       ! 2m air temp from previous forcing
+
+! The innovations
+real                 :: dsneqv !mm
+real                 :: dsnowh !m
 
 real, allocatable, dimension(:) :: zsoil
 real, allocatable, dimension(:) :: ficeold
@@ -1844,15 +1894,20 @@ real, allocatable, dimension(:) :: mice
 real, allocatable, dimension(:) :: mliq
 real, allocatable, dimension(:) :: dzsnso
 real, allocatable, dimension(:) :: zsnso
+real, allocatable, dimension(:) :: bexp
+real, allocatable, dimension(:) :: smcmax
+real, allocatable, dimension(:) :: psisat
+real, allocatable, dimension(:) :: smc
+real, allocatable, dimension(:) :: sh2o
 
 integer, allocatable, dimension(:) :: imelt  !phase change index
 real,    allocatable, dimension(:) :: sice
 
-integer :: snl_idx,i,j,iz
+integer :: snl_idx, iz, kk
 integer :: iloc, jloc        ! needed, but not use
-real    :: smp,sneqv,snowh
-real    :: sneqv1,snowh1
-real    :: ponding1,ponding2
+real    :: smp, sneqv, snowh, sneqv_post, snowh_post
+real    :: sneqv1, snowh1
+real    :: ponding1, ponding2
 integer :: newnode
 integer :: isnow, nsoil, nsnow, soiltype(4), isoil
 
@@ -1860,285 +1915,333 @@ integer :: isnow, nsoil, nsnow, soiltype(4), isoil
 real    :: SNOFLOW, BDSNOW
 type (noahmp_parameters)  :: parameters
 
-! isnow = noahmp401_struc(n)%noahmp401(t)%isnow
-! nsoil = noahmp401_struc(n)%nsoil
-! nsnow = noahmp401_struc(n)%nsnow
+isnow = state%isnowxy(ii, jj)
+nsoil = noah_lsm%nsoil
+nsnow = noah_lsm%nsnow
+! print*, 'isnow(ii, jj): ', ii, jj, isnow
 
-! allocate(ficeold(-nsnow+1:0))
-! allocate(snice(-nsnow+1:0))
-! allocate(snliq(-nsnow+1:0))
-! allocate(stc(-nsnow+1:nsoil))
-! allocate(imelt(-nsnow+1:nsoil))
-! allocate(supercool(-nsnow+1:nsoil))
-! allocate(mice(-nsnow+1:nsoil))
-! allocate(mliq(-nsnow+1:nsoil))
-! allocate(dzsnso(-nsnow+1:nsoil))
-! allocate(zsnso(-nsnow+1:nsoil))
-! allocate(sice(nsoil))
+allocate(ficeold(-nsnow+1:0))
+allocate(snice(-nsnow+1:0))
+allocate(snliq(-nsnow+1:0))
+allocate(stc(-nsnow+1:nsoil))
+allocate(imelt(-nsnow+1:nsoil))
+allocate(supercool(-nsnow+1:nsoil))
+allocate(mice(-nsnow+1:nsoil))
+allocate(mliq(-nsnow+1:nsoil))
+allocate(dzsnso(-nsnow+1:nsoil))
+allocate(zsnso(-nsnow+1:nsoil))
+allocate(sice(nsoil))
+allocate(bexp(nsoil))
+allocate(smcmax(nsoil))
+allocate(psisat(nsoil))
+allocate(smc(nsoil))
+allocate(sh2o(nsoil))
 
-! imelt = 0
+imelt = 0
 
-! !set empty snow layers to zero
-! do iz = -nsnow+1, isnow
-!    snice(iz) = 0.
-!    snliq(iz) = 0.
-!    stc(iz)   = 0.
-!    dzsnso(iz)= 0.
-!    zsnso(iz) = 0.
-! enddo
+!set empty snow layers to zero
+do iz = -nsnow+1, isnow
+   snice(iz) = 0.
+   snliq(iz) = 0.
+   stc(iz)   = 0.
+   dzsnso(iz)= 0.
+   zsnso(iz) = 0.
+enddo
 
-! ! initialize the variables
+! get the soil type to get the necessary parameters
+#ifndef SPATIAL_SOIL
+! should fail respectfully
+! or do the table approach
+! initialize the variables
 ! soiltype = noahmp401_struc(n)%noahmp401(t)%soiltype
 ! do isoil = 1, size(soiltype)
-!    parameters%BEXP(isoil)   = BEXP_TABLE   (SOILTYPE(isoil))
-!    parameters%PSISAT(isoil) = PSISAT_TABLE (SOILTYPE(isoil))
-!    parameters%SMCMAX(isoil) = SMCMAX_TABLE (SOILTYPE(isoil))
+!    parameters%BEXP(isoil)   = bexp_table  (soiltype(isoil))
+!    parameters%PSISAT(isoil) = psisat_table(soiltype(isoil))
+!    parameters%SMCMAX(isoil) = smcmax_table(soiltype(isoil))
 ! end do
+#else
+! obtain the relevant parameters from the spatial soil parameters
+bexp = bexp_3d(ii, :, jj)
+smcmax = smcmax_3d(ii, :, jj)
+psisat = psisat_3d(ii, :, jj)
+#endif
 
-! sneqv = noahmp401_struc(n)%noahmp401(t)%sneqv
-! snowh = noahmp401_struc(n)%noahmp401(t)%snowh
+smc = smcxy(ii, :, jj)
+sh2o = sh2oxy(ii, :, jj)
 
-! zsnso(-nsnow+1:nsoil) = noahmp401_struc(n)%noahmp401(t)%zss(1:nsnow+nsoil)
+sneqv = state%sneqvxy(ii, jj)
+snowh = state%snowhxy(ii, jj)
+sneqv_post = state%sneqvxy_post(ii, jj)
+snowh_post = state%snowhxy_post(ii, jj)
+! print*,'sneqv: ', sneqv
+! print*,'snowh: ', snowh
+! print*,'sneqv_post: ', sneqv_post
+! print*,'snowh_post: ', snowh_post
 
-! ! snow/soil layer thickness (m)
-! do iz = isnow+1, nsoil
-!    if(iz == isnow+1) then
-!       dzsnso(iz) = - zsnso(iz)
-!    else
-!       dzsnso(iz) = zsnso(iz-1) - zsnso(iz)
-!    end if
-! end do
+dsnowh = snowh_post - snowh
+dsneqv = sneqv_post - sneqv
+! print*,'dsnowh: ', dsnowh
+! print*,'dsneqv: ', dsneqv
 
-! ! set ZSOIL
-! allocate(zsoil(nsoil))
-! ! zsoil is negative.
-! zsoil(1) = -noahmp401_struc(n)%sldpth(1)
-! do i = 2, nsoil
-!    zsoil(i) = zsoil(i-1) - NOAHMP401_struc(n)%sldpth(i)
-! enddo
+! *****************************************************************************
+! bail out if the posterior is undefined or the innovation is zero?
+! also need to hadle when reading, if it is not in the file....
+! do this at a higher level before reading forcing data.
+! *****************************************************************************
 
-! ! state variables
-! snice(-nsnow+1:0) = &
-!      noahmp401_struc(n)%noahmp401(t)%snowice(1:nsnow)
-! snliq(-nsnow+1:0) = &
-!      noahmp401_struc(n)%noahmp401(t)%snowliq(1:nsnow)
-! stc(-nsnow+1:0) = &
-!      noahmp401_struc(n)%noahmp401(t)%tsno(1:nsnow)
-! ! soil temperature
-! stc(1:nsoil) = &
-!      noahmp401_struc(n)%noahmp401(t)%tslb(1:nsoil)
+zsnso(-nsnow+1:nsoil) = state%zsnsoxy(ii, -nsnow+1:nsoil, jj)
+! snow/soil layer thickness (m)
+do iz = isnow+1, nsoil
+   if(iz == isnow+1) then
+      dzsnso(iz) = - zsnso(iz)
+   else
+      dzsnso(iz) = zsnso(iz-1) - zsnso(iz)
+   end if
+end do
+! print*,'zsnso: ', zsnso
+! print*,'dzsnso: ', dzsnso
+!print*,''
 
+! set ZSOIL
+allocate(zsoil(nsoil))
+! zsoil is negative.
+zsoil(1) = -1 * noah_lsm%soil_thick_input(1)
+do kk = 2, nsoil
+   zsoil(kk) = zsoil(kk-1) - noah_lsm%soil_thick_input(kk)
+end do
 
-! ! from snowfall routine
-! ! creating a new layer
-! if(isnow == 0.and.(dsneqv.gt.0.and.dsnowh.gt.0))  then
-!    snowh = snowh + dsnowh
-!    sneqv = sneqv + dsneqv
-! end if
+snice(-nsnow+1:0) = state%snicexy(ii, :, jj)
+snliq(-nsnow+1:0) = state%snliqxy(ii, :, jj)
+stc(-nsnow+1:0) = state%tsnoxy(ii, :, jj)
+stc(1:nsoil) = state%tslbxy(ii, :, jj)
+! print*, "ii, jj: ", ii, jj
+! print*,'snice: ', snice
+! print*,'snliq: ', snliq
+! print*,'stc: ', stc(-nsnow+1:0)
+! print*,'tslb: ', stc(1:nsoil)
+!print*,'t2xy: ', t2xy(ii, jj)
 
-! newnode = 0
+! from snowfall routine
+! zero layers and both increments postive
+if(isnow == 0 .and. (dsneqv .gt. 0.and. dsnowh .gt. 0))  then
+   snowh = snowh + dsnowh
+   sneqv = sneqv + dsneqv
+end if
 
-! if(isnow == 0 .and. snowh >= 0.025.and.&
-!      (dsneqv.gt.0.and.dsnowh.gt.0))  then !mb: change limit
-!    isnow    = -1
-!    newnode  =  1
-!    dzsnso(0)= snowh
-!    snowh    = 0.
-!    stc(0)   = min(273.16, noahmp401_struc(n)%noahmp401(t)%sfctmp)
-!    snice(0) = sneqv
-!    snliq(0) = 0.
-! end if
+newnode = 0
+! If zero layer and depth results in layers
+if(isnow == 0 .and. snowh >= 0.025 .and. &
+   (dsneqv .gt. 0 .and. dsnowh .gt. 0))  then !mb: change limit
+   isnow    = -1
+   newnode  =  1
+   dzsnso(0)= snowh
+   snowh    = 0.
+   stc(0)   = min(273.16, t2xy(ii, jj))
+   snice(0) = sneqv
+   snliq(0) = 0.
+end if
 
-! ! snow with layers
-! if(isnow <  0 .and. newnode == 0 .and. &
-!      (dsneqv.gt.0.and.dsnowh.gt.0)) then
-!    snice(isnow+1)  = snice(isnow+1)   + dsneqv
-!    dzsnso(isnow+1) = dzsnso(isnow+1)  + dsnowh
-! endif
+! snow with layers
+if(isnow <  0 .and. newnode == 0 .and. &
+     (dsneqv.gt.0.and.dsnowh.gt.0)) then
+   snice(isnow+1)  = snice(isnow+1)   + dsneqv
+   dzsnso(isnow+1) = dzsnso(isnow+1)  + dsnowh
+endif
 
-! if(dsneqv.lt.0.and.dsnowh.lt.0) then
-!    snowh1 = snowh + dsnowh
-!    sneqv1 = sneqv + dsneqv
-!    if(snowh1.ge.0.and.sneqv1.ge.0) then
-!       snowh = snowh + dsnowh
-!       sneqv = sneqv + dsneqv
-!       ! update dzsnso
-!       ! how do you determine the thickness of a layer?
-!       if(snowh.le.dzsnso(0)) then
-!          isnow = 0
-!          dzsnso(-nsnow+1:(isnow-1)) = 0
-!          dzsnso(isnow) = snowh
-!       elseif(snowh.le.(dzsnso(0)+dzsnso(-1))) then
-!          isnow = -1
-!          dzsnso(-nsnow+1:(isnow-1)) = 0
-!          dzsnso(isnow) = snowh -dzsnso(isnow+1)
-!       elseif(snowh.le.(dzsnso(0)+dzsnso(-1)+dzsnso(-2))) then
-!          isnow = -2
-!          dzsnso(-nsnow+1:(isnow-2)) = 0
-!          dzsnso(isnow) = snowh -dzsnso(isnow+2)
-!       endif
-!    endif
-! endif
+if(dsneqv.lt.0.and.dsnowh.lt.0) then
+   snowh1 = snowh + dsnowh
+   sneqv1 = sneqv + dsneqv
+   if(snowh1.ge.0.and.sneqv1.ge.0) then
+      snowh = snowh + dsnowh
+      sneqv = sneqv + dsneqv
+      ! update dzsnso
+      ! how do you determine the thickness of a layer?
+      if(snowh.le.dzsnso(0)) then
+         isnow = 0
+         dzsnso(-nsnow+1:(isnow-1)) = 0
+         dzsnso(isnow) = snowh
+      elseif(snowh.le.(dzsnso(0)+dzsnso(-1))) then
+         isnow = -1
+         dzsnso(-nsnow+1:(isnow-1)) = 0
+         dzsnso(isnow) = snowh -dzsnso(isnow+1)
+      elseif(snowh.le.(dzsnso(0)+dzsnso(-1)+dzsnso(-2))) then
+         isnow = -2
+         dzsnso(-nsnow+1:(isnow-2)) = 0
+         dzsnso(isnow) = snowh -dzsnso(isnow+2)
+      endif
+   endif
+endif
 
-! ! ice fraction at the last timestep, add check for both snice and snliq are 0.0
-! do snl_idx=isnow+1,0
-!    if(snice(snl_idx)+snliq(snl_idx)>0.0) then
-!       ficeold(snl_idx)  = snice(snl_idx) / (snice(snl_idx)+snliq(snl_idx))
-!    else
-!       ficeold(snl_idx)  = 0.0
-!    endif
-! enddo
+! ice fraction at the last timestep, add check for both snice and snliq are 0.0
+do snl_idx=isnow+1,0
+   if(snice(snl_idx)+snliq(snl_idx)>0.0) then
+      ficeold(snl_idx)  = snice(snl_idx) / (snice(snl_idx)+snliq(snl_idx))
+   else
+      ficeold(snl_idx)  = 0.0
+   endif
+enddo
 
-! sice(:) = max(0.0, noahmp401_struc(n)%noahmp401(t)%smc(:)&
-!      - noahmp401_struc(n)%noahmp401(t)%sh2o(:))
+sice(:) = max(0.0, smc(:) - sh2o(:))
 
-! !imelt
-! do j = -nsnow+1, nsoil
-!    supercool(j) = 0.0
-! end do
+!imelt
+do kk = -nsnow+1, nsoil
+   supercool(kk) = 0.0
+end do
 
-! do j = isnow+1,0       ! all layers
-!    mice(j) = snice(j)
-!    mliq(j) = snliq(j)
-! end do
+do kk = isnow+1, 0       ! all layers
+   mice(kk) = snice(kk)
+   mliq(kk) = snliq(kk)
+end do
 
-! do j = 1, nsoil         ! soil
-!    mliq(j) =  noahmp401_struc(n)%noahmp401(t)%sh2o(j) * dzsnso(j) * 1000.
-!    mice(j) = (noahmp401_struc(n)%noahmp401(t)%smc(j) - &
-!         noahmp401_struc(n)%noahmp401(t)%sh2o(j))  * dzsnso(j) * 1000.
-! end do
+do kk = 1, nsoil         ! soil
+   mliq(kk) = sh2o(kk) * dzsnso(kk) * 1000.
+   mice(kk) = (smc(kk) - sh2o(kk))  * dzsnso(kk) * 1000.
+end do
 
-! do j = isnow+1,nsoil    ! all layers
-!    imelt(j)    = 0
-! enddo
+do kk = isnow+1, nsoil    ! all layers
+   imelt(kk) = 0
+enddo
 
-! do j = 1,nsoil
-!    if(stc(j) < tfrz) then
-!       smp = hfus*(tfrz-stc(j))/(grav*stc(j))             !(m)
-!       supercool(j) = parameters%smcmax(j)*(smp/parameters%psisat(j))**(-1./parameters%bexp(j))
-!       supercool(j) = supercool(j)*dzsnso(j)*1000.        !(mm)
-!    end if
-! enddo
+do kk = 1,nsoil
+   if(stc(kk) < noah_lsm%tfrz) then
+      smp = noah_lsm%hfus * (noah_lsm%tfrz-stc(kk)) / (noah_lsm%grav*stc(kk))  ! (m)
+      supercool(kk) = smcmax(kk) * (smp / psisat(kk))**(-1. / bexp(kk))
+      supercool(kk) = supercool(kk) * dzsnso(kk) * 1000.  ! (mm)
+   end if
+enddo
 
-! do j = isnow+1,nsoil
-!    if (mice(j) > 0. .and. stc(j) >= tfrz) then  !melting
-!       imelt(j) = 1
-!    endif
-!    if (mliq(j) > supercool(j) .and. stc(j) < tfrz) then
-!       imelt(j) = 2
-!    endif
+do kk = isnow+1, nsoil
+   if (mice(kk) > 0. .and. stc(kk) >= noah_lsm%tfrz) then  !melting
+      imelt(kk) = 1
+   endif
+   if (mliq(kk) > supercool(kk) .and. stc(kk) < noah_lsm%tfrz) then
+      imelt(kk) = 2
+   endif
 
-!    ! if snow exists, but its thickness is not enough to create a layer
-!    if (isnow == 0 &
-!         .and. sneqv > 0. .and. j == 1) then
-!       if (stc(j) >= tfrz) then
-!          imelt(j) = 1
-!       endif
-!    endif
-! enddo
+   ! if snow exists, but its thickness is not enough to create a layer
+   if (isnow == 0 &
+        .and. sneqv > 0. .and. kk == 1) then
+      if (stc(kk) >= noah_lsm%tfrz) then
+         imelt(kk) = 1
+      endif
+   endif
+enddo
 
-! ! from snowwater
-! snoflow = 0.0
-! ponding1 = 0.0
-! ponding2 = 0.0
+! from snowwater
+snoflow = 0.0
+ponding1 = 0.0
+ponding2 = 0.0
 
-! if(isnow < 0) &     ! when multi-layer
-!      call  compact (parameters, nsnow, nsoil, noahmp401_struc(n)%ts,     & !in
-!      stc, snice, snliq, zsoil, imelt, ficeold, iloc, jloc, & !in
-!      isnow, dzsnso ,zsnso)                                   !inout
-! if(isnow < 0) &
-!      call  combine (parameters, nsnow, nsoil ,iloc, jloc,          & !in
-!      isnow, noahmp401_struc(n)%noahmp401(t)%sh2o,   & !inout
-!      stc, snice, snliq, dzsnso, sice, snowh, sneqv, & !inout
-!      ponding1, ponding2)                              !out
-! if(isnow < 0) &
-!      call divide (parameters, nsnow, nsoil,      & !in
-!      isnow, stc, snice, snliq, dzsnso) !inout
+if(isnow < 0) then  ! when multi-layer
+   call compact ( &
+        parameters, nsnow, nsoil, real(noah_lsm%noah_timestep), &  ! in
+        stc, snice, snliq, zsoil, imelt, ficeold, iloc, jloc, &    ! in
+        isnow, dzsnso ,zsnso)                                      ! inout
+endif
 
-! !set empty snow layers to zero
-! do iz = -nsnow+1, isnow
-!    snice(iz) = 0.
-!    snliq(iz) = 0.
-!    stc(iz)   = 0.
-!    dzsnso(iz)= 0.
-!    zsnso(iz) = 0.
-! enddo
+if(isnow < 0) then
+   call combine ( &
+        parameters, nsnow, nsoil ,iloc, jloc,          &  ! in
+        isnow, sh2o,   &                                  ! inout
+        stc, snice, snliq, dzsnso, sice, snowh, sneqv, &  ! inout
+        ponding1, ponding2)                               ! out
+end if
 
-! !to obtain equilibrium state of snow in glacier region
-! if(sneqv > 2000.) then   ! 2000 mm -> maximum water depth
-!    bdsnow      = snice(0) / dzsnso(0)
-!    snoflow     = (sneqv - 2000.)
-!    snice(0)    = snice(0)  - snoflow
-!    dzsnso(0)   = dzsnso(0) - snoflow/bdsnow
-!    !snoflow     = snoflow / dt
-! end if
+! iloc and jloc not used? not set.
+if(isnow < 0) then
+   call divide( &
+        parameters, nsnow, nsoil,      &   ! in
+        isnow, stc, snice, snliq, dzsnso)  ! inout
+endif
 
-! ! sum up snow mass for layered snow
-! if(isnow < 0) then  ! mb: only do for multi-layer
-!    sneqv = 0.
-!    snowh = 0.      ! yeosang yoon
-!    do iz = isnow+1,0
-!       sneqv = sneqv + snice(iz) + snliq(iz)
-!       snowh = snowh + dzsnso(iz)             ! yeosang yoon
-!    enddo
-! end if
+!set empty snow layers to zero
+do iz = -nsnow+1, isnow
+   snice(iz) = 0.
+   snliq(iz) = 0.
+   stc(iz)   = 0.
+   dzsnso(iz)= 0.
+   zsnso(iz) = 0.
+enddo
 
-! ! no snow layer case, limit snow density to 1000
-! if (isnow == 0 .and. sneqv > 0. .and. snowh > 0.) then
-!    bdsnow = sneqv/snowh
-!    if (bdsnow >= denh2o) then
-!       snowh  = snowh*(bdsnow/1000.) ! change unit, sneqv=[mm] snowh=[m]
-!    end if
-! end if
+!to obtain equilibrium state of snow in glacier region
+if(sneqv > 2000.) then   ! 2000 mm -> maximum water depth
+   bdsnow      = snice(0) / dzsnso(0)
+   snoflow     = (sneqv - 2000.)
+   snice(0)    = snice(0)  - snoflow
+   dzsnso(0)   = dzsnso(0) - snoflow/bdsnow
+   !snoflow     = snoflow / dt  ! commented in LIS
+end if
 
-! ! reset zsnso and layer thinkness dzsnso
-! do iz = isnow+1, 0
-!    dzsnso(iz) = -dzsnso(iz)
-! end do
+! sum up snow mass for layered snow
+if(isnow < 0) then  ! mb: only do for multi-layer
+   sneqv = 0.
+   snowh = 0.      ! yeosang yoon
+   do iz = isnow+1,0
+      sneqv = sneqv + snice(iz) + snliq(iz)
+      snowh = snowh + dzsnso(iz)             ! yeosang yoon
+   enddo
+end if
 
-! dzsnso(1) = zsoil(1)
-! do iz = 2,nsoil
-!    dzsnso(iz) = (zsoil(iz) - zsoil(iz-1))
-! end do
+! no snow layer case, limit snow density to 1000
+if (isnow == 0 .and. sneqv > 0. .and. snowh > 0.) then
+   bdsnow = sneqv / snowh
+   if (bdsnow >= noah_lsm%denh2o) then
+      snowh  = snowh * (bdsnow / 1000.) ! change unit, sneqv=[mm] snowh=[m]
+   end if
+end if
 
-! zsnso(isnow+1) = dzsnso(isnow+1)
-! do iz = isnow+2 ,nsoil
-!    zsnso(iz) = zsnso(iz-1) + dzsnso(iz)
-! enddo
+! reset zsnso and layer thinkness dzsnso
+do iz = isnow+1, 0
+   dzsnso(iz) = -dzsnso(iz)
+end do
 
-! do iz = isnow+1 ,nsoil
-!    dzsnso(iz) = -dzsnso(iz)
-! end do
+dzsnso(1) = zsoil(1)
+do iz = 2,nsoil
+   dzsnso(iz) = (zsoil(iz) - zsoil(iz-1))
+end do
 
-! ! update state vars
-! noahmp401_struc(n)%noahmp401(t)%isnow = isnow
-! noahmp401_struc(n)%noahmp401(t)%sneqv = sneqv
-! noahmp401_struc(n)%noahmp401(t)%snowh = snowh
+zsnso(isnow+1) = dzsnso(isnow+1)
+do iz = isnow+2 ,nsoil
+   zsnso(iz) = zsnso(iz-1) + dzsnso(iz)
+enddo
 
-! noahmp401_struc(n)%noahmp401(t)%zss(1:nsnow+&
-!      nsoil) = zsnso(-nsnow+1:nsoil)
-! noahmp401_struc(n)%noahmp401(t)%snowice(1:nsnow) = &
-!      snice(-nsnow+1:0)
-! noahmp401_struc(n)%noahmp401(t)%snowliq(1:nsnow)  = &
-!      snliq(-nsnow+1:0)
-! noahmp401_struc(n)%noahmp401(t)%tsno(1:nsnow) = stc(-nsnow+1:0)
-! noahmp401_struc(n)%noahmp401(t)%tslb(1:nsoil) = stc(1:nsoil)
+do iz = isnow+1 ,nsoil
+   dzsnso(iz) = -dzsnso(iz)
+end do
 
-! deallocate(ficeold)
-! deallocate(snice)
-! deallocate(snliq)
-! deallocate(stc)
-! deallocate(imelt)
-! deallocate(supercool)
-! deallocate(mice)
-! deallocate(mliq)
-! deallocate(dzsnso)
-! deallocate(zsnso)
-! deallocate(sice)
+! update state vars
+state%isnowxy(ii, jj) = isnow
+state%sneqvxy(ii, jj) = sneqv
+state%snowhxy(ii, jj) = snowh
+! are both sneqv and snowh necessarily identical to the provided posteriors ??
+state%zsnsoxy(ii, -nsnow+1:nsoil, jj) = zsnso(-nsnow+1:nsoil)
+state%snicexy(ii, :, jj) = snice(-nsnow+1:0)
+state%snliqxy(ii, :, jj) = snliq(-nsnow+1:0)
+state%tsnoxy(ii, :, jj) = stc(-nsnow+1:0)
+state%tslbxy(ii, :, jj) = stc(1:nsoil)
 
-print*, 'finnished snow_update'
+! unconditionally deallocate
+deallocate(ficeold)
+deallocate(snice)
+deallocate(snliq)
+deallocate(stc)
+deallocate(imelt)
+deallocate(supercool)
+deallocate(mice)
+deallocate(mliq)
+deallocate(dzsnso)
+deallocate(zsnso)
+deallocate(sice)
+deallocate(bexp)
+deallocate(smcmax)
+deallocate(psisat)
+deallocate(smc)
+deallocate(sh2o)
 
-end subroutine snow_update
+! print*, 'finnished snow_update_inner'
+! print*, ''
+
+end subroutine snow_update_inner
 
 
 ! ==================================================================================================
@@ -2180,7 +2283,7 @@ end subroutine snow_update
                                                            RECHXY, &
                                                            QSLATXY, &
                                                            QRFSXY, &
-                                                           QSPRINGSXY  
+                                                           QSPRINGSXY
 ! local
     INTEGER  :: I,J,K,ITER,itf,jtf
     REAL :: BEXP,SMCMAX,PSISAT,SMCWLT,DWSAT,DKSAT
@@ -2204,15 +2307,15 @@ end subroutine snow_update
     ELSEWHERE
          LANDMASK=-1
     ENDWHERE
-    
+
 !Calculate lateral flow
 
     QLAT = 0.
 CALL LATERALFLOW(ISLTYP,WTD,QLAT,FDEPTH,TOPO,LANDMASK,DELTAT,AREA       &
-                        ,ids,ide,jds,jde,kds,kde                      & 
+                        ,ids,ide,jds,jde,kds,kde                      &
                         ,ims,ime,jms,jme,kms,kme                      &
                         ,its,ite,jts,jte,kts,kte                      )
-                        
+
 
 !compute flux from grounwater to rivers in the cell
 
@@ -2221,12 +2324,12 @@ CALL LATERALFLOW(ISLTYP,WTD,QLAT,FDEPTH,TOPO,LANDMASK,DELTAT,AREA       &
           IF(LANDMASK(I,J).GT.0)THEN
              IF(WTD(I,J) .GT. RIVERBED(I,J) .AND.  EQWTD(I,J) .GT. RIVERBED(I,J)) THEN
                RCOND = RIVERCOND(I,J) * EXP(PEXP(I,J)*(WTD(I,J)-EQWTD(I,J)))
-             ELSE    
+             ELSE
                RCOND = RIVERCOND(I,J)
              ENDIF
              QRF(I,J) = RCOND * (WTD(I,J)-RIVERBED(I,J)) * DELTAT/AREA(I,J)
 !for now, dont allow it to go from river to groundwater
-             QRF(I,J) = MAX(QRF(I,J),0.) 
+             QRF(I,J) = MAX(QRF(I,J),0.)
           ELSE
              QRF(I,J) = 0.
           ENDIF
@@ -2241,9 +2344,9 @@ CALL LATERALFLOW(ISLTYP,WTD,QLAT,FDEPTH,TOPO,LANDMASK,DELTAT,AREA       &
              SMCMAX = SMCMAX_TABLE(ISLTYP(I,J))
              SMCWLT = SMCWLT_TABLE(ISLTYP(I,J))
              IF(IVGTYP(I,J)==ISURBAN_TABLE)THEN
-                 SMCMAX = 0.45         
-                 SMCWLT = 0.40         
-             ENDIF 
+                 SMCMAX = 0.45
+                 SMCWLT = 0.40
+             ENDIF
              DWSAT  =   DWSAT_TABLE(ISLTYP(I,J))
              DKSAT  =   DKSAT_TABLE(ISLTYP(I,J))
              PSISAT = -PSISAT_TABLE(ISLTYP(I,J))
@@ -2271,7 +2374,7 @@ CALL LATERALFLOW(ISLTYP,WTD,QLAT,FDEPTH,TOPO,LANDMASK,DELTAT,AREA       &
                          DO ITER = 1, 100
                            DD = (SMC+SMCMAX)/(2.*SMCMAX)
                            AA = -DKSAT * DD  ** EXPON
-                           BBB = CC * ( (SMCMAX/SMC)**BEXP - 1. ) + 1. 
+                           BBB = CC * ( (SMCMAX/SMC)**BEXP - 1. ) + 1.
                            FUNC =  AA * BBB - FLUX
                            DFUNC = -DKSAT * (EXPON/(2.*SMCMAX)) * DD ** (EXPON - 1.) * BBB &
                                    + AA * CC * (-BEXP) * SMCMAX ** BEXP * SMC ** (-BEXP-1.)
@@ -2302,7 +2405,7 @@ CALL LATERALFLOW(ISLTYP,WTD,QLAT,FDEPTH,TOPO,LANDMASK,DELTAT,AREA       &
                               WTD(I,J) = ZSOIL(K)
                           ELSE
                               WTD(I,J) = ( SMOIS(I,K,J)*DZS(K) - SMCEQ(K)*ZSOIL(K-1) + SMCMAX*ZSOIL(K) ) / &
-                                         (SMCMAX - SMCEQ(K))   
+                                         (SMCMAX - SMCEQ(K))
                           ENDIF
                           EXIT
                      ENDIF
@@ -2369,7 +2472,7 @@ CALL LATERALFLOW(ISLTYP,WTD,QLAT,FDEPTH,TOPO,LANDMASK,DELTAT,AREA       &
 
          DO ITER = 1, 100
             FUNC = (SMC - SMCMAX) * AA +  BB * SMC ** EXPON
-            DFUNC = AA + BB * EXPON * SMC ** BEXP 
+            DFUNC = AA + BB * EXPON * SMC ** BEXP
 
             DX = FUNC/DFUNC
             SMC = SMC - DX

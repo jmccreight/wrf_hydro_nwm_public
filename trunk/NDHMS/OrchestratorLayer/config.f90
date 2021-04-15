@@ -56,6 +56,31 @@ module config_base
      REAL, DIMENSION(MAX_SOIL_LEVELS) :: soil_thick_input       ! depth to soil interfaces from namelist [m]
      integer :: rst_bi_out, rst_bi_in !0: default netcdf format. 1: binary write/read by each core.
      CHARACTER(LEN = 256) :: spatial_filename
+     ! Parameters
+     integer            :: nsnow = 3 ! max number of snow layers, currently hardcoded in NoahMP
+     real               :: undefined_real = 9.9692099683868690e36
+     integer            :: undefined_int = -2147483647
+     ! physical constants
+     ! definine all those in LIS because they are small pieces of data
+     ! that can be reused easily with this structure.
+     real               :: grav   = 9.80616   !acceleration due to gravity (m/s2)
+     real               :: sb     = 5.67e-08  !stefan-boltzmann constant (w/m2/k4)
+     real               :: vkc    = 0.40      !von karman constant
+     real               :: tfrz   = 273.16    !freezing/melting point (k)
+     real               :: hsub   = 2.8440e06 !latent heat of sublimation (j/kg)
+     real               :: hvap   = 2.5104e06 !latent heat of vaporization (j/kg)
+     real               :: hfus   = 0.3336e06 !latent heat of fusion (j/kg)
+     real               :: cwat   = 4.188e06  !specific heat capacity of water (j/m3/k)
+     real               :: cice   = 2.094e06  !specific heat capacity of ice (j/m3/k)
+     real               :: cpair  = 1004.64   !heat capacity dry air at const pres (j/kg/k)
+     real               :: tkwat  = 0.6       !thermal conductivity of water (w/m/k)
+     real               :: tkice  = 2.2       !thermal conductivity of ice (w/m/k)
+     real               :: tkair  = 0.023     !thermal conductivity of air (w/m/k)
+     real               :: rair   = 287.04    !gas constant for dry air (j/kg/k)
+     real               :: rw     = 461.269   !gas constant for  water vapor (j/kg/k)
+     real               :: denh2o = 1000.     !density of water (kg/m3)
+     real               :: denice = 917.      !density of ice (kg/m3)
+
   end type NOAHLSM_OFFLINE_
 
   type WRF_HYDRO_OFFLINE_
