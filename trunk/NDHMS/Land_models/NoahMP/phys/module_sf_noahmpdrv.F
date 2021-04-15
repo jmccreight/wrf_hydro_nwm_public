@@ -1915,6 +1915,9 @@ integer :: isnow, nsoil, nsnow, soiltype(4), isoil
 real    :: SNOFLOW, BDSNOW
 type (noahmp_parameters)  :: parameters
 
+! -----------------------------------------------------------------------------
+! Collect and initialize data
+
 isnow = state%isnowxy(ii, jj)
 nsoil = noah_lsm%nsoil
 nsnow = noah_lsm%nsnow
@@ -1938,7 +1941,6 @@ allocate(smc(nsoil))
 allocate(sh2o(nsoil))
 
 imelt = 0
-
 !set empty snow layers to zero
 do iz = -nsnow+1, isnow
    snice(iz) = 0.
@@ -2021,32 +2023,37 @@ stc(1:nsoil) = state%tslbxy(ii, :, jj)
 ! print*,'tslb: ', stc(1:nsoil)
 !print*,'t2xy: ', t2xy(ii, jj)
 
+! -----------------------------------------------------------------------------
+! Compute update from bulk posteriors
+
+! * zero layers and both increments postive
 ! from snowfall routine
-! zero layers and both increments postive
-if(isnow == 0 .and. (dsneqv .gt. 0.and. dsnowh .gt. 0))  then
-   snowh = snowh + dsnowh
-   sneqv = sneqv + dsneqv
+if(isnow == 0 .and. (dsneqv .gt. 0 .and. dsnowh .gt. 0))  then
+   snowh = snowh + dsnowh  !! JLM: i would not do this, i would maintain separate prior and posterior quantities
+   sneqv = sneqv + dsneqv  !! JLM: as above
 end if
 
 newnode = 0
-! If zero layer and depth results in layers
+! * If zero layer and depth results in (>= 1) layers
 if(isnow == 0 .and. snowh >= 0.025 .and. &
    (dsneqv .gt. 0 .and. dsnowh .gt. 0))  then !mb: change limit
    isnow    = -1
    newnode  =  1
-   dzsnso(0)= snowh
+   dzsnso(0)= snowh  !! JLM why are these the priors in zero layer but posterior in multi layer?
    snowh    = 0.
    stc(0)   = min(273.16, t2xy(ii, jj))
-   snice(0) = sneqv
+   snice(0) = sneqv  !! JLM why prior in zero layer, but posterior in multi layer?
    snliq(0) = 0.
 end if
 
-! snow with layers
+! snow with layers (this is mutually exclusive with the above two: consider restructuring logic?)
 if(isnow <  0 .and. newnode == 0 .and. &
      (dsneqv.gt.0.and.dsnowh.gt.0)) then
-   snice(isnow+1)  = snice(isnow+1)   + dsneqv
-   dzsnso(isnow+1) = dzsnso(isnow+1)  + dsnowh
+   snice(isnow+1)  = snice(isnow+1)   + dsneqv  !! JLM: adding the delta to the top layer, gives posterior on layers
+   dzsnso(isnow+1) = dzsnso(isnow+1)  + dsnowh  !! JLM: adding the delta to the top layer, gives posterior on layers
 endif
+! JLM: Adding positive deltas to the top of the pack seems like it may only be
+! JLM: desired in some situations.
 
 if(dsneqv.lt.0.and.dsnowh.lt.0) then
    snowh1 = snowh + dsnowh
@@ -2071,6 +2078,24 @@ if(dsneqv.lt.0.and.dsnowh.lt.0) then
       endif
    endif
 endif
+! JLM: snice is not recalculate in the negative deltas case
+
+! JLM>: the above seems like it's 2 cases
+!   1. dsneqv.lt.0.and.dsnowh.lt.0
+!   2. dsneqv.gt.0.and.dsnowh.gt.0
+! and should be logically constructed as such at the if..else..end outer level.
+! But there are other cases to consider in the 3x3 table
+!   3. dsneqv.lt.0.and.dsnowh.gt.0
+!   4. dsneqv.lt.0.and.dsnowh.eq.0
+!   5. dsneqv.gt.0.and.dsnowh.lt.0
+!   6. dsneqv.gt.0.and.dsnowh.eq.0
+!   7. dsneqv.eq.0.and.dsnowh.lt.0
+!   8. dsneqv.eq.0.and.dsnowh.gt.0
+!   9. both equal zero is "do nothing" and will be handeled.
+!   The question is how to combine some of these. Right now, is the code is overly restrictive?
+!   Are we always required to update both bulk depth and swe? are they required to have the same sign
+!   in the updates? Direct insertion may not obey that if density is known externally and wrong internally.
+! <JLM end
 
 ! ice fraction at the last timestep, add check for both snice and snliq are 0.0
 do snl_idx=isnow+1,0
@@ -2080,6 +2105,10 @@ do snl_idx=isnow+1,0
       ficeold(snl_idx)  = 0.0
    endif
 enddo
+! JLM>: snice is its prior value if the deltas are negative. so the above is a posterior ficeold
+! in the case of positive deltas. in the case of negative deltas, it's a combo of prior snice and
+! posterior snliq?
+!
 
 sice(:) = max(0.0, smc(:) - sh2o(:))
 
