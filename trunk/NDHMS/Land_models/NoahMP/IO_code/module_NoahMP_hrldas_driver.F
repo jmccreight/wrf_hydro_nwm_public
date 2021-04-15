@@ -1233,11 +1233,12 @@ module module_NoahMP_hrldas_driver
      restart_flag = .FALSE.
 
      SMOIS     =  undefined_real
-     !TSLB      =  undefined_real
      SH2O      =  undefined_real
      CANLIQXY  =  undefined_real
      TSK       =  undefined_real
      RAINBL_tmp    =  undefined_real
+     ! moved to state structure
+     !TSLB      =  undefined_real
      !SNOW      =  undefined_real
      !SNOWH     =  undefined_real
 
@@ -2026,24 +2027,39 @@ subroutine  ldas_output(itime, state)
 end subroutine  ldas_output
 
 !!===============================================================================
-subroutine lsm_restart(state)
+subroutine lsm_restart(state, posterior)
   use state_module, only: state_type
   implicit none
-  type(state_type) :: state
+  type(state_type), intent(in) :: state
+  logical, intent(in), optional :: posterior
+
   character(len=256):: tmpStr
   integer :: ncid
+  logical :: posterior_  ! local copy
+
+  posterior_ = .false.
+  if(present(posterior)) posterior_ = posterior
 
 #ifdef HYDRO_D
-  print*, 'Write restart at '//olddate(1:13)
+  if(.not. posterior_) then
+     print*, 'Write restart at ' // olddate(1:13)
+  else
+     print*, 'Write posterior restart at ' // olddate(1:13)
+  end if
 #endif
 
-  call prepare_restart_file (trim(noah_lsm%outdir), version, igrid, llanduse, olddate, startdate,                         &
+  if(.not. posterior_) then
+     write(tmpStr, '(A,"/RESTART.",A10,"_DOMAIN",I1)') &
+          trim(noah_lsm%outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13), igrid
+  else
+     write(tmpStr, '(A,"/RESTART_POSTERIOR.",A10,"_DOMAIN",I1)') &
+          trim(noah_lsm%outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13), igrid
+  end if
+
+  call prepare_restart_file (trim(noah_lsm%outdir), version, igrid, llanduse, olddate, startdate,  &
        ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                   &
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1,        &
-       cen_lon, iswater, ivgtyp)
-
-   write(tmpStr, '(A,"/RESTART.",A10,"_DOMAIN",I1)') trim(noah_lsm%outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13), igrid
-
+       cen_lon, iswater, ivgtyp, file_name=tmpStr)
 
 #ifdef MPP_LAND
   if(my_id .eq. io_id) then
@@ -2053,7 +2069,6 @@ subroutine lsm_restart(state)
 #ifdef MPP_LAND
   endif
 #endif
-
   call add_to_restart(ncid,state%TSLBXY      , "SOIL_T", layers="SOIL")
   call add_to_restart(ncid,state%TSNOXY    , "SNOW_T", layers="SNOW")
   call add_to_restart(ncid,SMOIS     , "SMC"   , layers="SOIL")
@@ -2513,6 +2528,8 @@ subroutine snow_update_all(state)
        t2xy)
 
   deallocate(t2xy)
+
+  call lsm_restart(state, posterior=.true.)
 
 end subroutine snow_update_all
 

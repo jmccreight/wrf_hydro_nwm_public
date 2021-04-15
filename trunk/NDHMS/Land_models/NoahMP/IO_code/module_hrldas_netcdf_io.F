@@ -2757,7 +2757,7 @@ contains
       subroutine prepare_restart_file_mpp(outdir, version, igrid, llanduse, olddate, startdate,  &
        ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                                    &
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,                       &
-       iswater, vegtyp)
+       iswater, vegtyp, file_name)
 
     implicit none
 
@@ -2781,14 +2781,23 @@ contains
     real,                                  intent(in) :: lat1, lon1, cen_lon
     integer,                               intent(in) :: iswater
     integer, dimension(ixpar,jxpar),       intent(in) :: vegtyp
+    character(len=*),                      intent(in), optional :: file_name
+
     integer, dimension(global_nx,global_ny) :: gvegtyp
+    character(len=256)                      :: file_name_
+
+    if(.not. present(file_name)) then
+       file_name_ = ''
+    else
+       file_name_ = file_name
+    end if
 
     call write_io_int(vegtyp, gvegtyp)
     if(my_id .eq. io_id) then
       call prepare_restart_file_seq(outdir, version, igrid, llanduse, olddate, startdate,  &
        global_nx, global_ny, global_nx, global_ny, xstartpar, ystartpar,               &
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,         &
-       iswater, gvegtyp)
+       iswater, gvegtyp, file_name_)
     endif
 
     call mpp_land_sync()
@@ -2799,7 +2808,7 @@ contains
   subroutine prepare_restart_file_seq(outdir, version, igrid, llanduse, olddate, startdate,  &
        ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                                    &
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1, cen_lon,                       &
-       iswater, vegtyp)
+       iswater, vegtyp, file_name)
 
     implicit none
 #include <netcdf.inc>
@@ -2824,6 +2833,7 @@ contains
     real,                                  intent(in) :: lat1, lon1, cen_lon
     integer,                               intent(in) :: iswater
     integer, dimension(ixpar,jxpar),       intent(in) :: vegtyp
+    character(len=*),                      intent(in), optional :: file_name
 
     character(len=1) :: hgrid
     integer :: ncid
@@ -2846,8 +2856,15 @@ contains
 
 #endif
 
+    ! Set output_flnm to this default
+    write(output_flnm, '(A,"/RESTART.",A10,"_DOMAIN",I1)') &
+         trim(outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13), igrid
+    if(present(file_name)) then
+       if(trim(file_name) /= '') then
+          output_flnm = file_name
+       end if
+    end if
 
-    write(output_flnm, '(A,"/RESTART.",A10,"_DOMAIN",I1)') trim(outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13), igrid
     if (rank==0) then
 #ifdef HYDRO_D
       print*, 'output_flnm = "'//trim(output_flnm)//'"'
