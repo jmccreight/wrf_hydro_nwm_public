@@ -2239,15 +2239,16 @@ do iz = isnow+1 ,nsoil
 end do
 
 ! update state vars
-state%isnowxy(ii, jj) = isnow
 state%sneqvxy(ii, jj) = sneqv
 state%snowhxy(ii, jj) = snowh
 ! are both sneqv and snowh necessarily identical to the provided posteriors ??
+state%isnowxy(ii, jj) = isnow
 state%zsnsoxy(ii, -nsnow+1:nsoil, jj) = zsnso(-nsnow+1:nsoil)
 state%snicexy(ii, :, jj) = snice(-nsnow+1:0)
 state%snliqxy(ii, :, jj) = snliq(-nsnow+1:0)
 state%tsnoxy(ii, :, jj) = stc(-nsnow+1:0)
 state%tslbxy(ii, :, jj) = stc(1:nsoil)
+! add sneqvo
 
 ! unconditionally deallocate
 deallocate(ficeold)
