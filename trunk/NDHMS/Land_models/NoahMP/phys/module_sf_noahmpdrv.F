@@ -1800,11 +1800,8 @@ SUBROUTINE PEDOTRANSFER_SR2006(nsoil,sand,clay,orgm,parameters)
 
 ! -----------------------------------------------------------------------------
 
-subroutine snow_update( &
-     state, &
-     bexp_3d, smcmax_3d, psisat_3d, &
-     smcxy, sh2oxy, &
-     t2xy)
+
+subroutine snow_update(state)
 ! This routine provides a loop over the grid and calls the "inner" update procedure
 ! which actually does the update.
 ! All return values/updates are in the state_type (state) data structure.
@@ -1814,22 +1811,11 @@ use config_base, only: noah_lsm
 implicit none
 
 type(state_type), intent(inout)    :: state      ! Variables to update are in this structure
-real, dimension(:,:,:), intent(in) :: bexp_3d    ! C-H B exponent
-real, dimension(:,:,:), intent(in) :: smcmax_3d  ! Soil Moisture Limit: Max
-real, dimension(:,:,:), intent(in) :: psisat_3d  ! Saturated Matric Potential
-real, dimension(:,:,:), intent(in) :: smcxy      ! aka smois: layered vol. soil moisture content [-]
-real, dimension(:,:,:), intent(in) :: sh2oxy     ! layered liquid vol. soil moisture content [-]
-real, dimension(:,:),   intent(in) :: t2xy       ! 2m air temp from previous forcing
-
 integer :: ii, jj
 
 do jj = noah_lsm%ystart, noah_lsm%yend
    do ii = noah_lsm%xstart, noah_lsm%xend
-      call snow_update_inner( &
-           ii, jj, &
-           state, bexp_3d, smcmax_3d, psisat_3d, &
-           smcxy, sh2oxy, &
-           t2xy)
+      call snow_update_inner(ii, jj, state)
    end do
 end do
 
@@ -1837,406 +1823,223 @@ print*, 'finnished snow_update'
 end subroutine snow_update
 
 
-subroutine snow_update_inner( &
-     ii, jj, &
-     state, &
-     bexp_3d, smcmax_3d, psisat_3d, &
-     smcxy, sh2oxy, &
-     t2xy)
-! Adapted from
-! https://github.com/NASA-LIS/LISF/blob/master/lis/surfacemodels/land/noahmp.4.0.1/da_snow/noahmp401_snow_update.F90
-! REVISION HISTORY:
-!   13 Aug 2017: Sujay Kumar; Initial specification
-!   14 Dec 2018: Yeosang Yoon; Modified code for NoahMP 4.0.1 and SNODEP
-!   15 May 2019: Yeosang Yoon; Modified for NoahMP 4.0.1 and LDTSI
-!   13 Dec 2019: Eric Kemp; Replaced LDTSI with SNOW
-!    7 Apr 2021: J. McCreight, port to NoahMP code base
+subroutine snow_update_inner(ii, jj, state)
+! J. McCreight 4/26/21
+! This DART based version is adapted from
+! https://github.com/NCAR/DART/blob/Manhattan/models/noah/dart_to_noah.f90
+! First the code is meant to replicate the above, then it is mean to fix some issues.
+! Finally, this code will be merged with the eventual approach used for JEDI.
+!
+! This method only uses posterior SNOEQV as input for the partition function.
 
-! DESCRIPTION:
-!   This subroutine updates relevant snow prognostics based
-!   on the update to the total SWE (dsneqv) and total
-!   snow depth (dsnowh). The updated variables include
-!   number of snow layers, snice, snliq, snow temperature
-!   and snow thickness.
-
-! use LIS_coreMod
-! use NoahMP401_lsmMod
-! use module_sf_noahmplsm_401
-! use noahmp_tables_401
-use module_sf_noahmplsm, only: combine, compact, divide
 use state_module, only: state_type
 use config_base, only: noah_lsm
-use module_sf_noahmplsm, only: noahmp_parameters
 
 implicit none
 
 integer, intent(in)  :: ii
 integer, intent(in)  :: jj
 type(state_type), intent(inout)    :: state
-real, dimension(:,:,:), intent(in) :: bexp_3d    ! C-H B exponent
-real, dimension(:,:,:), intent(in) :: smcmax_3d  ! Soil Moisture Limit: Max
-real, dimension(:,:,:), intent(in) :: psisat_3d  ! Saturated Matric Potential
-real, dimension(:,:,:), intent(in) :: smcxy      ! aka smois: layered vol. soil moisture content [-]
-real, dimension(:,:,:), intent(in) :: sh2oxy     ! layered liquid vol. soil moisture content [-]
-real, dimension(:,:), intent(in) :: t2xy       ! 2m air temp from previous forcing
 
-! The innovations
-real                 :: dsneqv !mm
-real                 :: dsnowh !m
+integer :: iz, nsnow, isnow
+real    :: dsneqv
+real    :: sneqv, snowh, sneqv_post, snowh_post
+real    :: wt_swe, wt_ice, wt_liq
+real    :: sum_ice, sum_liq, innov_ice, innov_liq
+real    :: missing_value, snow_density
+real, allocatable, dimension(:) :: snice, snice_post
+real, allocatable, dimension(:) :: snliq, snliq_post
+! real, allocatable, dimension(:) :: dzsnso
+! real, allocatable, dimension(:) :: zsnso
+real, parameter :: zero_f = 0.00000000
+real, parameter :: one_f = 1.00000000
+real, parameter :: epsilon_f = 1.e-6
 
-real, allocatable, dimension(:) :: zsoil
-real, allocatable, dimension(:) :: ficeold
-real, allocatable, dimension(:) :: snice
-real, allocatable, dimension(:) :: snliq
-real, allocatable, dimension(:) :: stc
-real, allocatable, dimension(:) :: supercool
-real, allocatable, dimension(:) :: mice
-real, allocatable, dimension(:) :: mliq
-real, allocatable, dimension(:) :: dzsnso
-real, allocatable, dimension(:) :: zsnso
-real, allocatable, dimension(:) :: bexp
-real, allocatable, dimension(:) :: smcmax
-real, allocatable, dimension(:) :: psisat
-real, allocatable, dimension(:) :: smc
-real, allocatable, dimension(:) :: sh2o
-
-integer, allocatable, dimension(:) :: imelt  !phase change index
-real,    allocatable, dimension(:) :: sice
-
-integer :: snl_idx, iz, kk
-integer :: iloc, jloc        ! needed, but not use
-real    :: smp, sneqv, snowh, sneqv_post, snowh_post
-real    :: sneqv1, snowh1
-real    :: ponding1, ponding2
-integer :: newnode
-integer :: isnow, nsoil, nsnow, soiltype(4), isoil
-
-! local
-real    :: SNOFLOW, BDSNOW
-type (noahmp_parameters)  :: parameters
-
-isnow = state%isnowxy(ii, jj)
-nsoil = noah_lsm%nsoil
+missing_value = noah_lsm%undefined_real
 nsnow = noah_lsm%nsnow
+
 ! print*, 'isnow(ii, jj): ', ii, jj, isnow
 
-allocate(ficeold(-nsnow+1:0))
-allocate(snice(-nsnow+1:0))
-allocate(snliq(-nsnow+1:0))
-allocate(stc(-nsnow+1:nsoil))
-allocate(imelt(-nsnow+1:nsoil))
-allocate(supercool(-nsnow+1:nsoil))
-allocate(mice(-nsnow+1:nsoil))
-allocate(mliq(-nsnow+1:nsoil))
-allocate(dzsnso(-nsnow+1:nsoil))
-allocate(zsnso(-nsnow+1:nsoil))
-allocate(sice(nsoil))
-allocate(bexp(nsoil))
-allocate(smcmax(nsoil))
-allocate(psisat(nsoil))
-allocate(smc(nsoil))
-allocate(sh2o(nsoil))
+! The input/posterior
+isnow = state%isnowxy(ii, jj)  ! dart does not use this but we will
+sneqv_post = state%sneqvxy_post(ii, jj)
 
-imelt = 0
+! If the posterior sneqv is undefined - all done.
+if(sneqv_post == missing_value) return
 
-!set empty snow layers to zero
-do iz = -nsnow+1, isnow
-   snice(iz) = 0.
-   snliq(iz) = 0.
-   stc(iz)   = 0.
-   dzsnso(iz)= 0.
-   zsnso(iz) = 0.
-enddo
-
-! get the soil type to get the necessary parameters
-#ifndef SPATIAL_SOIL
-! should fail respectfully
-! or do the table approach
-! initialize the variables
-! soiltype = noahmp401_struc(n)%noahmp401(t)%soiltype
-! do isoil = 1, size(soiltype)
-!    parameters%BEXP(isoil)   = bexp_table  (soiltype(isoil))
-!    parameters%PSISAT(isoil) = psisat_table(soiltype(isoil))
-!    parameters%SMCMAX(isoil) = smcmax_table(soiltype(isoil))
-! end do
-#else
-! obtain the relevant parameters from the spatial soil parameters
-bexp = bexp_3d(ii, :, jj)
-smcmax = smcmax_3d(ii, :, jj)
-psisat = psisat_3d(ii, :, jj)
-#endif
-
-smc = smcxy(ii, :, jj)
-sh2o = sh2oxy(ii, :, jj)
-
+! Priors (unmarked variable names)
 sneqv = state%sneqvxy(ii, jj)
 snowh = state%snowhxy(ii, jj)
-sneqv_post = state%sneqvxy_post(ii, jj)
-snowh_post = state%snowhxy_post(ii, jj)
 ! print*,'sneqv: ', sneqv
 ! print*,'snowh: ', snowh
 ! print*,'sneqv_post: ', sneqv_post
-! print*,'snowh_post: ', snowh_post
 
-dsnowh = snowh_post - snowh
+! Need valid priors for this method.
+if(sneqv == missing_value .or. snowh == missing_value) return
+
 dsneqv = sneqv_post - sneqv
-! print*,'dsnowh: ', dsnowh
+! If the posterior is the prior - all done.
+if(abs(dsneqv) < epsilon_f) return
 ! print*,'dsneqv: ', dsneqv
 
-! *****************************************************************************
-! bail out if the posterior is undefined or the innovation is zero?
-! also need to hadle when reading, if it is not in the file....
-! do this at a higher level before reading forcing data.
-! *****************************************************************************
+if(snowh < epsilon_f .or. sneqv < epsilon_f) then
+   ! This method relies on prior density to calculate the posterior
+   ! depth and layer masses. Without prior depth or swe we 
+   ! can not generate a posterior.
+   
+   ! Can only set depth/swe to zero in some edge cases
 
-zsnso(-nsnow+1:nsoil) = state%zsnsoxy(ii, -nsnow+1:nsoil, jj)
-! snow/soil layer thickness (m)
-do iz = isnow+1, nsoil
-   if(iz == isnow+1) then
-      dzsnso(iz) = - zsnso(iz)
+   ! I think it's worth making the possible conditions (more) explicit
+   if(abs(sneqv) < epsilon_f) then
+      ! If the prior sneqv is zero, use the prior depth
+      snowh_post = snowh
    else
-      dzsnso(iz) = zsnso(iz-1) - zsnso(iz)
+      ! Why not zero? this seems to risk crashing the model...
+      snowh_post = missing_value
+   end if
+   ! what about if snowh == 0...
+
+   state%sneqvxy(ii, jj) = sneqv_post
+   state%snowhxy(ii, jj) = snowh_post
+   return
+end if
+
+
+! -----------------------------------------------------------------------------
+! Zero layer mode: only snowh_post
+snow_density = sneqv / snowh
+snowh_post = (dsneqv / snow_density) + snowh
+
+! make sure the posterior snow depth is positive, else set to prior.
+! why not zero?
+! should these two conditions be separated?
+if(snowh_post < epsilon_f) snowh_post = snowh
+
+! Set the state
+state%sneqvxy(ii, jj) = sneqv_post
+state%snowhxy(ii, jj) = snowh_post
+
+! It's not clear to the zero layer update if it should be layers...
+! Set
+!    state%isnowxy(ii, jj) = -1
+! ? to see if that triggers partitioning inside the model?
+! TODO: understand/test the above.
+
+if(isnow == 0) return
+
+
+! -----------------------------------------------------------------------------
+! Multilayer mode
+
+! scalars
+sum_ice = zero_f
+sum_liq = zero_f
+wt_ice = zero_f
+wt_liq = zero_f
+innov_ice = zero_f
+innov_liq = zero_f
+
+! vectors
+allocate(snice(1:nsnow))
+allocate(snliq(1:nsnow))
+allocate(snice_post(1:nsnow))
+allocate(snliq_post(1:nsnow))
+! allocate(snice(-nsnow+1:0))
+! allocate(snliq(-nsnow+1:0))
+! allocate(dzsnso(-nsnow+1:nsoil))
+! allocate(zsnso(-nsnow+1:nsoil))
+
+! priors
+snice(1:nsnow) = state%snicexy(ii, :, jj)
+snliq(1:nsnow) = state%snliqxy(ii, :, jj)
+
+! set empty snow layers to zero: cant this be scalar mult?
+! TODO: test the following changes
+do iz = 1, nsnow
+   snice_post(iz) = zero_f
+   snliq_post(iz) = zero_f
+   !dzsnso(iz)= 0.
+   !zsnso(iz) = 0.
+enddo
+! snice_post = snice * zero_f
+! snliq_post = snliq * zero_f
+
+! sum the bulk ice and liquid contents/components of SWE
+! I'm not sure snice could be zero... that would be runoff? but ok
+do iz = 1, nsnow
+   if(snice(iz) >= zero_f .and. snliq(iz) >= zero_f) then
+      sum_ice = sum_ice + snice(iz)
+      sum_liq = sum_liq + snliq(iz)
    end if
 end do
-! print*,'zsnso: ', zsnso
-! print*,'dzsnso: ', dzsnso
-!print*,''
+! TODO: The above can be vectorized in the code... 
 
-! set ZSOIL
-allocate(zsoil(nsoil))
-! zsoil is negative.
-zsoil(1) = -1 * noah_lsm%soil_thick_input(1)
-do kk = 2, nsoil
-   zsoil(kk) = zsoil(kk-1) - noah_lsm%soil_thick_input(kk)
-end do
+! In the original code:
+! sum_sn is 0 if zero-layer mode and equal to sneqv otherwise (?confirm)
+! if there is positive SNEQV, then wt_swe = sum_sn/sneqv
+! = 0 in zero layer mode
+! = 1 in multilayer mode
+! However if SNEQV is zero then wt_swe is uninitialized memory/garbage.
+! Do not let this happen!
+! since wt_swe effectively distinguishes zero and multilayer mode. the
+! variable is now removed and isnow introduced with the two cases being
+! handled explictly.
 
-snice(-nsnow+1:0) = state%snicexy(ii, :, jj)
-snliq(-nsnow+1:0) = state%snliqxy(ii, :, jj)
-stc(-nsnow+1:0) = state%tsnoxy(ii, :, jj)
-stc(1:nsoil) = state%tslbxy(ii, :, jj)
-! print*, "ii, jj: ", ii, jj
-! print*,'snice: ', snice
-! print*,'snliq: ', snliq
-! print*,'stc: ', stc(-nsnow+1:0)
-! print*,'tslb: ', stc(1:nsoil)
-!print*,'t2xy: ', t2xy(ii, jj)
+! The layer weights
+!    wt_ice_l and wt_liq_l
+! were unnecessary temporary vectors removed when consolidatind loops.
 
-! from snowfall routine
-! zero layers and both increments postive
-if(isnow == 0 .and. (dsneqv .gt. 0.and. dsnowh .gt. 0))  then
-   snowh = snowh + dsnowh
-   sneqv = sneqv + dsneqv
-end if
+! TODO: ? bail out if the ice/liq fraction is undefined? should always be
+! defined in multilayer mode. but we might enforce.
 
-newnode = 0
-! If zero layer and depth results in layers
-if(isnow == 0 .and. snowh >= 0.025 .and. &
-   (dsneqv .gt. 0 .and. dsnowh .gt. 0))  then !mb: change limit
-   isnow    = -1
-   newnode  =  1
-   dzsnso(0)= snowh
-   snowh    = 0.
-   stc(0)   = min(273.16, t2xy(ii, jj))
-   snice(0) = sneqv
-   snliq(0) = 0.
-end if
+! bulk weights for ice and liq
+wt_liq = sum_liq / sneqv
+wt_ice = one_f - wt_liq
+! the bulk innovations for ice and liq
+innov_liq = dsneqv * wt_liq
+innov_ice = dsneqv * wt_ice
 
-! snow with layers
-if(isnow <  0 .and. newnode == 0 .and. &
-     (dsneqv.gt.0.and.dsnowh.gt.0)) then
-   snice(isnow+1)  = snice(isnow+1)   + dsneqv
-   dzsnso(isnow+1) = dzsnso(isnow+1)  + dsnowh
-endif
-
-if(dsneqv.lt.0.and.dsnowh.lt.0) then
-   snowh1 = snowh + dsnowh
-   sneqv1 = sneqv + dsneqv
-   if(snowh1.ge.0.and.sneqv1.ge.0) then
-      snowh = snowh + dsnowh
-      sneqv = sneqv + dsneqv
-      ! update dzsnso
-      ! how do you determine the thickness of a layer?
-      if(snowh.le.dzsnso(0)) then
-         isnow = 0
-         dzsnso(-nsnow+1:(isnow-1)) = 0
-         dzsnso(isnow) = snowh
-      elseif(snowh.le.(dzsnso(0)+dzsnso(-1))) then
-         isnow = -1
-         dzsnso(-nsnow+1:(isnow-1)) = 0
-         dzsnso(isnow) = snowh -dzsnso(isnow+1)
-      elseif(snowh.le.(dzsnso(0)+dzsnso(-1)+dzsnso(-2))) then
-         isnow = -2
-         dzsnso(-nsnow+1:(isnow-2)) = 0
-         dzsnso(isnow) = snowh -dzsnso(isnow+2)
-      endif
-   endif
-endif
-
-! ice fraction at the last timestep, add check for both snice and snliq are 0.0
-do snl_idx=isnow+1,0
-   if(snice(snl_idx)+snliq(snl_idx)>0.0) then
-      ficeold(snl_idx)  = snice(snl_idx) / (snice(snl_idx)+snliq(snl_idx))
+do iz = 1, nsnow
+   ! Fractional layer weightings for ice and liquid
+   if(snice(iz) >= epsilon_f .and. sum_ice > epsilon_f) then
+      snice_post(iz) = snice(iz) + (innov_ice * snice(iz) / sum_ice)
    else
-      ficeold(snl_idx)  = 0.0
-   endif
-enddo
-
-sice(:) = max(0.0, smc(:) - sh2o(:))
-
-!imelt
-do kk = -nsnow+1, nsoil
-   supercool(kk) = 0.0
-end do
-
-do kk = isnow+1, 0       ! all layers
-   mice(kk) = snice(kk)
-   mliq(kk) = snliq(kk)
-end do
-
-do kk = 1, nsoil         ! soil
-   mliq(kk) = sh2o(kk) * dzsnso(kk) * 1000.
-   mice(kk) = (smc(kk) - sh2o(kk))  * dzsnso(kk) * 1000.
-end do
-
-do kk = isnow+1, nsoil    ! all layers
-   imelt(kk) = 0
-enddo
-
-do kk = 1,nsoil
-   if(stc(kk) < noah_lsm%tfrz) then
-      smp = noah_lsm%hfus * (noah_lsm%tfrz-stc(kk)) / (noah_lsm%grav*stc(kk))  ! (m)
-      supercool(kk) = smcmax(kk) * (smp / psisat(kk))**(-1. / bexp(kk))
-      supercool(kk) = supercool(kk) * dzsnso(kk) * 1000.  ! (mm)
+      snice_post(iz) = missing_value
    end if
-enddo
 
-do kk = isnow+1, nsoil
-   if (mice(kk) > 0. .and. stc(kk) >= noah_lsm%tfrz) then  !melting
-      imelt(kk) = 1
-   endif
-   if (mliq(kk) > supercool(kk) .and. stc(kk) < noah_lsm%tfrz) then
-      imelt(kk) = 2
-   endif
-
-   ! if snow exists, but its thickness is not enough to create a layer
-   if (isnow == 0 &
-        .and. sneqv > 0. .and. kk == 1) then
-      if (stc(kk) >= noah_lsm%tfrz) then
-         imelt(kk) = 1
-      endif
-   endif
-enddo
-
-! from snowwater
-snoflow = 0.0
-ponding1 = 0.0
-ponding2 = 0.0
-
-if(isnow < 0) then  ! when multi-layer
-   call compact ( &
-        parameters, nsnow, nsoil, real(noah_lsm%noah_timestep), &  ! in
-        stc, snice, snliq, zsoil, imelt, ficeold, iloc, jloc, &    ! in
-        isnow, dzsnso ,zsnso)                                      ! inout
-endif
-
-if(isnow < 0) then
-   call combine ( &
-        parameters, nsnow, nsoil ,iloc, jloc,          &  ! in
-        isnow, sh2o,   &                                  ! inout
-        stc, snice, snliq, dzsnso, sice, snowh, sneqv, &  ! inout
-        ponding1, ponding2)                               ! out
-end if
-
-! iloc and jloc not used? not set.
-if(isnow < 0) then
-   call divide( &
-        parameters, nsnow, nsoil,      &   ! in
-        isnow, stc, snice, snliq, dzsnso)  ! inout
-endif
-
-!set empty snow layers to zero
-do iz = -nsnow+1, isnow
-   snice(iz) = 0.
-   snliq(iz) = 0.
-   stc(iz)   = 0.
-   dzsnso(iz)= 0.
-   zsnso(iz) = 0.
-enddo
-
-!to obtain equilibrium state of snow in glacier region
-if(sneqv > 2000.) then   ! 2000 mm -> maximum water depth
-   bdsnow      = snice(0) / dzsnso(0)
-   snoflow     = (sneqv - 2000.)
-   snice(0)    = snice(0)  - snoflow
-   dzsnso(0)   = dzsnso(0) - snoflow/bdsnow
-   !snoflow     = snoflow / dt  ! commented in LIS
-end if
-
-! sum up snow mass for layered snow
-if(isnow < 0) then  ! mb: only do for multi-layer
-   sneqv = 0.
-   snowh = 0.      ! yeosang yoon
-   do iz = isnow+1,0
-      sneqv = sneqv + snice(iz) + snliq(iz)
-      snowh = snowh + dzsnso(iz)             ! yeosang yoon
-   enddo
-end if
-
-! no snow layer case, limit snow density to 1000
-if (isnow == 0 .and. sneqv > 0. .and. snowh > 0.) then
-   bdsnow = sneqv / snowh
-   if (bdsnow >= noah_lsm%denh2o) then
-      snowh  = snowh * (bdsnow / 1000.) ! change unit, sneqv=[mm] snowh=[m]
+   if(snliq(iz) >= epsilon_f .and. sum_liq > epsilon_f) then
+      snliq_post(iz) = snliq(iz) + (innov_liq * snliq(iz) / sum_liq)
+   else
+      snliq_post(iz) = missing_value
    end if
-end if
 
-! reset zsnso and layer thinkness dzsnso
-do iz = isnow+1, 0
-   dzsnso(iz) = -dzsnso(iz)
-end do
+   ! Dont create negative posterior masses. If that happens
+   ! revert to prior. Why not set to zero?
+   if(snice_post(iz) < epsilon_f .and. snice_post(iz) /= missing_value) then
+      snice_post(iz) = snice(iz)
+   end if
 
-dzsnso(1) = zsoil(1)
-do iz = 2,nsoil
-   dzsnso(iz) = (zsoil(iz) - zsoil(iz-1))
-end do
-
-zsnso(isnow+1) = dzsnso(isnow+1)
-do iz = isnow+2 ,nsoil
-   zsnso(iz) = zsnso(iz-1) + dzsnso(iz)
-enddo
-
-do iz = isnow+1 ,nsoil
-   dzsnso(iz) = -dzsnso(iz)
+   if (snliq_post(iz) < epsilon_f .and. snliq_post(iz) /= missing_value) then
+      snliq_post(iz) = snliq(iz)
+   end if
 end do
 
 ! update state vars
-state%isnowxy(ii, jj) = isnow
-state%sneqvxy(ii, jj) = sneqv
-state%snowhxy(ii, jj) = snowh
-! are both sneqv and snowh necessarily identical to the provided posteriors ??
-state%zsnsoxy(ii, -nsnow+1:nsoil, jj) = zsnso(-nsnow+1:nsoil)
-state%snicexy(ii, :, jj) = snice(-nsnow+1:0)
-state%snliqxy(ii, :, jj) = snliq(-nsnow+1:0)
-state%tsnoxy(ii, :, jj) = stc(-nsnow+1:0)
-state%tslbxy(ii, :, jj) = stc(1:nsoil)
+state%snicexy(ii, :, jj) = snice_post(1:nsnow)
+state%snliqxy(ii, :, jj) = snliq_post(1:nsnow)
+
+! Not originally applied by dart
+! state%isnowxy(ii, jj) = isnow
+! state%zsnsoxy(ii, -nsnow+1:nsoil, jj) = zsnso(-nsnow+1:nsoil)
+! state%tsnoxy(ii, :, jj) = stc(-nsnow+1:0)
+! state%tslbxy(ii, :, jj) = stc(1:nsoil)
+! sneqvo
 
 ! unconditionally deallocate
-deallocate(ficeold)
 deallocate(snice)
 deallocate(snliq)
-deallocate(stc)
-deallocate(imelt)
-deallocate(supercool)
-deallocate(mice)
-deallocate(mliq)
-deallocate(dzsnso)
-deallocate(zsnso)
-deallocate(sice)
-deallocate(bexp)
-deallocate(smcmax)
-deallocate(psisat)
-deallocate(smc)
-deallocate(sh2o)
+deallocate(snice_post)
+deallocate(snliq_post)
 
 ! print*, 'finnished snow_update_inner'
 ! print*, ''

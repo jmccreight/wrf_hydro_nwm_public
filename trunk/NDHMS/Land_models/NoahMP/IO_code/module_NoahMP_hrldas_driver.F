@@ -2509,28 +2509,8 @@ subroutine snow_update_all(state)
   use state_module, only: state_type
   type(state_type), intent(inout) :: state
 
-  real, allocatable, dimension(:,:) :: t2xy  ! forcing 2m air temp
-
-  ! what is the case when these are not in the file?
-  ! for later...
-  ! check if the posteriors are allocated?
-  ! what is one is allocated and the other is not?
-  ! Check if there are posteriors anywhere: snowh and sneqv
-
-  ! Get tair from the forcing at the previous timestep
-  allocate(t2xy(xstart:xend, ystart:yend))
-  call read_forcing_t2d(t2xy)
-
-  call snow_update( &
-       state, &
-       bexp_3d, smcmax_3d, psisat_3d, &
-       smois, sh2o, &
-       t2xy)
-
-  deallocate(t2xy)
-
+  call snow_update(state)
   call lsm_restart(state, posterior=.true.)
-
 end subroutine snow_update_all
 
 
