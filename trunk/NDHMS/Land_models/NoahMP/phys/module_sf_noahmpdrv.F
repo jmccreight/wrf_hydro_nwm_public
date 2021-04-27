@@ -1844,7 +1844,7 @@ type(state_type), intent(inout)    :: state
 integer :: iz, nsnow, isnow
 real    :: dsneqv
 real    :: sneqv, snowh, sneqv_post, snowh_post
-real    :: wt_swe, wt_ice, wt_liq
+real    :: wt_ice, wt_liq
 real    :: sum_ice, sum_liq, innov_ice, innov_liq
 real    :: missing_value, snow_density
 real, allocatable, dimension(:) :: snice, snice_post
@@ -1899,8 +1899,11 @@ if(snowh < epsilon_f .or. sneqv < epsilon_f) then
    end if
    ! what about if snowh == 0...
 
-   state%sneqvxy(ii, jj) = sneqv_post
    state%snowhxy(ii, jj) = snowh_post
+   ! Is the following a mistake in the original code?
+   ! It seems we should discard the posterior sneqv
+   ! for zero or the prior, that is never done in the original.
+   state%sneqvxy(ii, jj) = sneqv_post
    return
 end if
 
