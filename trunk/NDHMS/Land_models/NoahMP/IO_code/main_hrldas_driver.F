@@ -26,7 +26,7 @@ program noah_hrldas_driver
   use module_noah1d_hrldas_driver, only: land_driver_ini, land_driver_exe
 #else
   ! this is used to drive NoahMP
-  use module_noahmp_hrldas_driver, only: land_driver_ini, land_driver_exe
+  use module_noahmp_hrldas_driver, only: land_driver_ini, land_driver_exe, snow_update_all
 #endif
 
   ! NEW MODULE WITH DT INCLUDING STATE, PARAMETER,FORCING AND GEOMETRY. Different modules
@@ -43,6 +43,9 @@ program noah_hrldas_driver
   call orchestrator%init()
   
   call land_driver_ini(NTIME, state)
+
+  ! For data assimilation: read bulk posteriors and apply partition function(s)
+  call snow_update_all(state)
   
 #ifdef WRF_HYDRO   
   do ITIME = 1, NTIME

@@ -16,9 +16,11 @@ all:
 	fi
 
 	@if [ -d "LandModel" ]; then \
-		(cd LandModel; make ; rm -f ../../Run/wrf_hydro.exe; mv run/hrldas.exe  ../../Run/wrf_hydro.exe  );	 \
-		(cd LandModel; make ; rm -f ../../Run/snow_update.exe; mv snow_update/snow_update.exe  ../../Run/snow_update.exe  ); \
+		(cd LandModel; make ; rm -f ../../Run/wrf_hydro.exe; mv run/hrldas.exe  ../../Run/wrf_hydro.exe  ); \
+        	# (cd LandModel; make ; rm -f ../../Run/snow_update.exe; mv snow_update/snow_update.exe  ../../Run/snow_update.exe  ); \
 	fi
+
+
 
 clean:
 	@if [ -d "LandModel_cpl" ]; then \
