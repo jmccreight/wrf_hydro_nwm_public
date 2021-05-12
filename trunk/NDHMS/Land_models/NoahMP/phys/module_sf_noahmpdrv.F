@@ -1928,6 +1928,8 @@ state%snowhxy(ii, jj) = snowh_post
 ! ? to see if that triggers partitioning inside the model?
 ! TODO: understand/test the above.
 
+! Solve a posterior isnow here based on the posterior depth
+
 if(isnow == 0) return
 
 
