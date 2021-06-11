@@ -6,7 +6,7 @@ all:
 	(rm -f Run/wrf_hydro.exe   )
 	(make -f Makefile.comm BASIC)
 	@if [ -d "LandModel_cpl" ]; then \
-	(cd LandModel_cpl; make) \
+		(cd LandModel_cpl; make); \
 	fi
 	if [ $(WRF_HYDRO_RAPID) -eq 1 ]; then \
 		(cd lib;rm -f librapid.a); \
@@ -16,16 +16,19 @@ all:
 	fi
 
 	@if [ -d "LandModel" ]; then \
-	(cd LandModel; make ; rm -f ../../Run/wrf_hydro.exe; mv run/hrldas.exe  ../../Run/wrf_hydro.exe  ) \
+		(cd LandModel; make ; rm -f ../../Run/wrf_hydro.exe; mv run/hrldas.exe  ../../Run/wrf_hydro.exe  ); \
+        	# (cd LandModel; make ; rm -f ../../Run/snow_update.exe; mv snow_update/snow_update.exe  ../../Run/snow_update.exe  ); \
 	fi
+
+
 
 clean:
 	@if [ -d "LandModel_cpl" ]; then \
-	(cd LandModel_cpl; make clean) \
+		(cd LandModel_cpl; make clean); \
 	fi
 	(make -f Makefile.comm clean)
 	@if [ -d "LandModel" ]; then \
-	(cd LandModel; make clean) \
+		(cd LandModel; make clean); \
 	fi
 	if [ $(WRF_HYDRO_RAPID) -eq 1 ]; then \
 		(cd Rapid_routing; make -f makefile.cpl clean); \

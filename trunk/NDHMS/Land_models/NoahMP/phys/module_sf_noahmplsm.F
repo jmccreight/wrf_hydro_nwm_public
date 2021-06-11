@@ -59,10 +59,10 @@ MODULE MODULE_SF_NOAHMPLSM
   private ::       CANWATER
   private ::       SNOWWATER
   private ::               SNOWFALL
-  private ::               COMBINE
-  private ::               DIVIDE
+!  private ::               COMBINE
+!  private ::               DIVIDE
   private ::                         COMBO
-  private ::               COMPACT
+!  private ::               COMPACT
   private ::               SNOWH2O
   private ::       SOILWATER
   private ::               ZWTEQ
@@ -10013,4 +10013,3 @@ RSURF_SNOW_TABLE     = RSURF_SNOW
   end subroutine read_mp_optional_parameters
 
 END MODULE NOAHMP_TABLES
-

@@ -18,7 +18,7 @@
 ! 
 !  User controllable options: <if applicable>
 
-program noah_hrldas_driver
+program snow_update_driver
 ! this is the main program to drive HRLDAS-Noah, HRLDAS-NoahMP, and other Land models.
 
 #ifdef Noah1d
@@ -35,29 +35,27 @@ program noah_hrldas_driver
   use forcing
   use geometry
   use orchestrator_base
-  
+
   implicit none
   integer :: ITIME, NTIME
   type(state_type) :: state
-  
-  call orchestrator%init()
-  
-  call land_driver_ini(NTIME, state)
 
-  ! For data assimilation: read bulk posteriors and apply partition function(s)
+  print*, 'Running snow_update_driver.exe'
+
+  call orchestrator%init()
+
+  ! JLM: This restarts hydro too, is there way to circumvent that?
+  call land_driver_ini(NTIME, state)
+  ! restart read needs to be aware of update variables
+
+  ! This call should probably be part of the init, but here now
+  ! in this separate executable
+  ! snow update writes restart for the posterior, pass alternative file name RESTART_posterior
   call snow_update_all(state)
-  
-#ifdef WRF_HYDRO   
-  do ITIME = 1, NTIME
-#else
-  do ITIME = 0, NTIME
-#endif
-     ! DTs must be passed to the exe.
-     call land_driver_exe(ITIME, state)
-  end do
+
 #ifdef WRF_HYDRO
   !Pass state for destruction
   call hydro_finish()
 #endif
-     
-end program noah_hrldas_driver
+
+end program snow_update_driver

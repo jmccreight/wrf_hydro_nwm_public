@@ -10,6 +10,7 @@ OBJS_NoahMP = module_NoahMP_hrldas_driver.o
 OBJS = \
 	main_hrldas_driver.o \
 	module_hrldas_netcdf_io.o
+#	snow_update_driver.o \
 
 CPPHRLDAS = -D_HRLDAS_OFFLINE_ $(MOD_OPT)
 
@@ -30,6 +31,12 @@ main_hrldas_driver.o: ../../../OrchestratorLayer/orchestrator.o main_hrldas_driv
 #	$(COMPILERF90) -o $(@) -c $(F90FLAGS) $(FREESOURCE) -I ../MPP -I. \
 #	-I../phys -I../Utility_routines $(NETCDFMOD) $(*).f90
 	@echo ""
+
+# snow_update_driver.o: ../../../OrchestratorLayer/orchestrator.o snow_update_driver.F
+# 	@echo ""
+# 	$(COMPILERF90) $(CPPINVOKE) $(CPPFLAGS) $(CPPHRLDAS) -o $(@) -c $(F90FLAGS) $(LDFLAGS) $(FREESOURCE) -I ../MPP -I. \
+# 	-I../phys -I../Utility_routines -I../../../mod -I../../../MPP -I../data_structures $(NETCDFMOD) $(*).F
+# 	@echo ""
 
 module_hrldas_netcdf_io.o: module_hrldas_netcdf_io.F
 	@echo ""

@@ -22,7 +22,7 @@ module module_NoahMP_hrldas_driver
 
   USE module_hrldas_netcdf_io
   USE module_sf_noahmp_groundwater
-  USE module_sf_noahmpdrv, only: noahmp_init, noahmplsm
+  USE module_sf_noahmpdrv, only: noahmp_init, noahmplsm, snow_update
   USE module_date_utilities
   USE orchestrator_base
   USE config_base, only: wrf_hydro, noah_lsm
@@ -174,7 +174,7 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SMOISEQ   ! volumetric soil moisture [m3/m3]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SMOIS     ! volumetric soil moisture [m3/m3]
   REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SH2O      ! volumetric liquid soil moisture [m3/m3]
-  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  TSLB      ! soil temperature [K]
+  !REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  TSLB      ! soil temperature [K]
 !  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOW      ! snow water equivalent [mm] ** (sometime) PROGNOSTIC VARIABLE
 !  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNOWH     ! physical snow depth [m] ** (sometime) PROGNOSTIC VARIABLE
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CANWAT    ! total canopy water + ice [mm]
@@ -185,7 +185,7 @@ module module_NoahMP_hrldas_driver
 
 ! INOUT (with no Noah LSM equivalent) (as defined in WRF)
 
-  INTEGER, ALLOCATABLE, DIMENSION(:,:)    ::  ISNOWXY   ! actual no. of snow layers
+  ! INTEGER, ALLOCATABLE, DIMENSION(:,:)    ::  ISNOWXY   ! actual no. of snow layers
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TVXY      ! vegetation leaf temperature
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  TGXY      ! bulk ground surface temperature
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CANICEXY  ! canopy-intercepted ice (mm)
@@ -195,7 +195,7 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CMXY      ! bulk momentum drag coefficient
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  CHXY      ! bulk sensible heat exchange coefficient
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  FWETXY    ! wetted or snowed fraction of the canopy (-)
-  REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNEQVOXY  ! snow mass at last time step(mm h2o)
+  !REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SNEQVOXY  ! snow mass at last time step(mm h2o)
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  ALBOLDXY  ! snow albedo at last time step (-)
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  QSNOWXY   ! snowfall on the ground [mm/s]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  QRAINXY   ! rainfall on the ground [mm/s]
@@ -206,10 +206,10 @@ module module_NoahMP_hrldas_driver
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  SMCWTDXY  ! groundwater storage [mm]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  DEEPRECHXY! groundwater storage [mm]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RECHXY    ! groundwater storage [mm]
-!  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  TSNOXY    ! snow temperature [K] ** REFACTOR THIS!
-!  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  ZSNSOXY   ! snow layer depth [m] ** REFACTOR THIS!
-!  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SNICEXY   ! snow layer ice [mm] ** REFACTOR THIS!
-!  REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SNLIQXY   ! snow layer liquid water [mm] ** REFACTOR THIS!
+  ! REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  TSNOXY    ! snow temperature [K] ** REFACTOR THIS!
+  ! REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  ZSNSOXY   ! snow layer depth [m] ** REFACTOR THIS!
+  ! REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SNICEXY   ! snow layer ice [mm] ** REFACTOR THIS!
+  ! REAL,    ALLOCATABLE, DIMENSION(:,:,:)  ::  SNLIQXY   ! snow layer liquid water [mm] ** REFACTOR THIS!
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  LFMASSXY  ! leaf mass [g/m2]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  RTMASSXY  ! mass of fine roots [g/m2]
   REAL,    ALLOCATABLE, DIMENSION(:,:)    ::  STMASSXY  ! stem mass [g/m2]
@@ -644,17 +644,17 @@ module module_NoahMP_hrldas_driver
        noah_lsm%start_year, noah_lsm%start_month, noah_lsm%start_day, noah_lsm%start_hour, noah_lsm%start_min, 0
 
   startdate = olddate
-  
+
 #ifdef MPP_LAND
   ix = ix_tmp
   jx = jx_tmp
 #endif
-  
+
 #ifdef WRF_HYDRO
   forcdate = olddate
 #endif
-  
-  ! Convenience variables    
+
+  ! Convenience variables
   xstart = noah_lsm%xstart
   ystart = noah_lsm%ystart
   xend = noah_lsm%xend
@@ -759,7 +759,7 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( SMOISEQ   (XSTART:XEND,1:NSOIL,YSTART:YEND) )     ! eq volumetric soil moisture [m3/m3]
   ALLOCATE ( SMOIS     (XSTART:XEND,1:NSOIL,YSTART:YEND) )     ! volumetric soil moisture [m3/m3]
   ALLOCATE ( SH2O      (XSTART:XEND,1:NSOIL,YSTART:YEND) )     ! volumetric liquid soil moisture [m3/m3]
-  ALLOCATE ( TSLB      (XSTART:XEND,1:NSOIL,YSTART:YEND) )     ! soil temperature [K]
+  !ALLOCATE ( TSLB      (XSTART:XEND,1:NSOIL,YSTART:YEND) )     ! soil temperature [K]
   !ALLOCATE ( SNOW      (XSTART:XEND,YSTART:YEND) )  ! snow water equivalent [mm]
   !ALLOCATE ( SNOWH     (XSTART:XEND,YSTART:YEND) )  ! physical snow depth [m]
   ALLOCATE ( CANWAT    (XSTART:XEND,YSTART:YEND) )  ! total canopy water + ice [mm]
@@ -770,7 +770,7 @@ module module_NoahMP_hrldas_driver
 
 ! INOUT (with no Noah LSM equivalent) (as defined in WRF)
 
-  ALLOCATE ( ISNOWXY   (XSTART:XEND,YSTART:YEND) )  ! actual no. of snow layers
+  ! ALLOCATE ( ISNOWXY   (XSTART:XEND,YSTART:YEND) )  ! actual no. of snow layers
   ALLOCATE ( TVXY      (XSTART:XEND,YSTART:YEND) )  ! vegetation leaf temperature
   ALLOCATE ( TGXY      (XSTART:XEND,YSTART:YEND) )  ! bulk ground surface temperature
   ALLOCATE ( CANICEXY  (XSTART:XEND,YSTART:YEND) )  ! canopy-intercepted ice (mm)
@@ -780,7 +780,7 @@ module module_NoahMP_hrldas_driver
   ALLOCATE ( CMXY      (XSTART:XEND,YSTART:YEND) )  ! bulk momentum drag coefficient
   ALLOCATE ( CHXY      (XSTART:XEND,YSTART:YEND) )  ! bulk sensible heat exchange coefficient
   ALLOCATE ( FWETXY    (XSTART:XEND,YSTART:YEND) )  ! wetted or snowed fraction of the canopy (-)
-  ALLOCATE ( SNEQVOXY  (XSTART:XEND,YSTART:YEND) )  ! snow mass at last time step(mm h2o)
+  !ALLOCATE ( SNEQVOXY  (XSTART:XEND,YSTART:YEND) )  ! snow mass at last time step(mm h2o)
   ALLOCATE ( ALBOLDXY  (XSTART:XEND,YSTART:YEND) )  ! snow albedo at last time step (-)
   ALLOCATE ( QSNOWXY   (XSTART:XEND,YSTART:YEND) )  ! snowfall on the ground [mm/s]
   ALLOCATE ( QRAINXY   (XSTART:XEND,YSTART:YEND) )  ! rainfall on the ground [mm/s]
@@ -938,7 +938,7 @@ module module_NoahMP_hrldas_driver
   SMSTOT     = undefined_real
   SMOIS      = undefined_real
   SH2O       = undefined_real
-  TSLB       = undefined_real
+  !TSLB       = undefined_real
   !SNOW       = undefined_real
   !SNOWH      = undefined_real
   CANWAT     = undefined_real
@@ -949,7 +949,7 @@ module module_NoahMP_hrldas_driver
   UDRUNOFF   = 0.0
   SMOISEQ    = undefined_real
   ALBEDO     = undefined_real
-  ISNOWXY    = undefined_int
+  ! ISNOWXY    = undefined_int
   TVXY       = undefined_real
   TGXY       = undefined_real
   CANICEXY   = undefined_real
@@ -959,7 +959,7 @@ module module_NoahMP_hrldas_driver
   CMXY       = undefined_real
   CHXY       = undefined_real
   FWETXY     = undefined_real
-  SNEQVOXY   = undefined_real
+  !SNEQVOXY   = undefined_real
   ALBOLDXY   = undefined_real
   QSNOWXY    = undefined_real
   QRAINXY    = undefined_real
@@ -1131,7 +1131,7 @@ module module_NoahMP_hrldas_driver
      call mpp_land_bcast_char(19,OLDDATE(1:19))
 #endif
 
-     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SOIL_T"  , TSLB     )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SOIL_T"  , state%TSLBXY   )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNOW_T"  , state%TSNOXY   )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SMC"     , SMOIS    )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SH2O"    , SH2O     )
@@ -1140,17 +1140,19 @@ module module_NoahMP_hrldas_driver
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNLIQ"   , state%SNLIQXY  )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "QSNOW"   , QSNOWXY  )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "FWET"    , FWETXY   )
-     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNEQVO"  , SNEQVOXY )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNEQVO"  , state%SNEQVOXY )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "EAH"     , EAHXY    )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "TAH"     , TAHXY    )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ALBOLD"  , ALBOLDXY )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "CM"      , CMXY     )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "CH"      , CHXY     )
-     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ISNOW"   , ISNOWXY  )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ISNOW"   , state%ISNOWXY  )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "CANLIQ"  , CANLIQXY )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "CANICE"  , CANICEXY )
-     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNEQV"   , state%SNOW     )
-     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNOWH"   , state%SNOWH    )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNEQV"   , state%SNEQVXY     )
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNOWH_post", state%SNOWHXY_post)
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNEQV_post", state%SNEQVXY_post)
+     call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "SNOWH"   , state%SNOWHXY    )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "TV"      , TVXY     )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "TG"      , TGXY     )
      call get_from_restart(xstart, xend, xstart, ixfull, jxfull, "ZWT"     , ZWTXY    )
@@ -1209,11 +1211,11 @@ module module_NoahMP_hrldas_driver
 
 ! Must still call NOAHMP_INIT even in restart to set up parameter arrays (also done in WRF)
 
-     CALL NOAHMP_INIT(    LLANDUSE,     state%SNOW,    state%SNOWH,   CANWAT,   ISLTYP,   IVGTYP, &   ! call from WRF phys_init
-                    TSLB,    SMOIS,     SH2O,      DZS, FNDSOILW, FNDSNOWH, &
-                     TSK,  ISNOWXY,     TVXY,     TGXY, CANICEXY,      TMN,     XICE, &
+     CALL NOAHMP_INIT(    LLANDUSE,     state%SNEQVXY,    state%SNOWHXY,   CANWAT,   ISLTYP,   IVGTYP, &   ! call from WRF phys_init
+                    state%TSLBXY,    SMOIS,     SH2O,      DZS, FNDSOILW, FNDSNOWH, &
+                     TSK,  state%ISNOWXY,     TVXY,     TGXY, CANICEXY,      TMN,     XICE, &
                 CANLIQXY,    EAHXY,    TAHXY,     CMXY,     CHXY,                     &
-                  FWETXY, SNEQVOXY, ALBOLDXY,  QSNOWXY, WSLAKEXY,    ZWTXY,     WAXY, &
+                  FWETXY, state%SNEQVOXY, ALBOLDXY,  QSNOWXY, WSLAKEXY,    ZWTXY,     WAXY, &
                     WTXY,   state%TSNOXY,  state%ZSNSOXY,  state%SNICEXY,  state%SNLIQXY, LFMASSXY, RTMASSXY, &
                 STMASSXY,   WOODXY, STBLCPXY, FASTCPXY,   XSAIXY, LAI,                    &
                   T2MVXY,   T2MBXY, CHSTARXY,                                         &
@@ -1231,11 +1233,12 @@ module module_NoahMP_hrldas_driver
      restart_flag = .FALSE.
 
      SMOIS     =  undefined_real
-     TSLB      =  undefined_real
      SH2O      =  undefined_real
      CANLIQXY  =  undefined_real
      TSK       =  undefined_real
      RAINBL_tmp    =  undefined_real
+     ! moved to state structure
+     !TSLB      =  undefined_real
      !SNOW      =  undefined_real
      !SNOWH     =  undefined_real
 
@@ -1270,7 +1273,7 @@ module module_NoahMP_hrldas_driver
 
      CALL READINIT_HRLDAS(noah_lsm%HRLDAS_SETUP_FILE, xstart, xend, ystart, yend,  &
           NSOIL, DZS, OLDDATE, LDASIN_VERSION, SMOIS,       &
-          TSLB, CANWAT, TSK, state%SNOW, state%SNOWH, FNDSNOWH)
+          state%TSLBXY, CANWAT, TSK, state%SNEQVXY, state%SNOWHXY, FNDSNOWH)
 
 !yw     VEGFRA    =  undefined_real
 !yw     LAI       =  undefined_real
@@ -1307,11 +1310,11 @@ module module_NoahMP_hrldas_driver
 !     SNOW = SNOW * 1000.    ! Convert snow water equivalent to mm. MB: remove v3.7
 
      FNDSOILW = .FALSE.
-     CALL NOAHMP_INIT(    LLANDUSE,     state%SNOW,    state%SNOWH,   CANWAT,   ISLTYP,   IVGTYP, &   ! call from WRF phys_init
-                    TSLB,    SMOIS,     SH2O,      DZS, FNDSOILW, FNDSNOWH, &
-                     TSK,  ISNOWXY,     TVXY,     TGXY, CANICEXY,      TMN,     XICE, &
+     CALL NOAHMP_INIT(    LLANDUSE,     state%SNEQVXY,    state%SNOWHXY,   CANWAT,   ISLTYP,   IVGTYP, &   ! call from WRF phys_init
+                    state%TSLBXY,    SMOIS,     SH2O,      DZS, FNDSOILW, FNDSNOWH, &
+                     TSK,  state%ISNOWXY,     TVXY,     TGXY, CANICEXY,      TMN,     XICE, &
                 CANLIQXY,    EAHXY,    TAHXY,     CMXY,     CHXY,                     &
-                  FWETXY, SNEQVOXY, ALBOLDXY,  QSNOWXY, WSLAKEXY,    ZWTXY,     WAXY, &
+                  FWETXY, state%SNEQVOXY, ALBOLDXY,  QSNOWXY, WSLAKEXY,    ZWTXY,     WAXY, &
                     WTXY,   state%TSNOXY,  state%ZSNSOXY,  state%SNICEXY,  state%SNLIQXY, LFMASSXY, RTMASSXY, &
                 STMASSXY,   WOODXY, STBLCPXY, FASTCPXY,   XSAIXY, LAI,                    &
                   T2MVXY,   T2MBXY, CHSTARXY,                                         &
@@ -1366,7 +1369,7 @@ module module_NoahMP_hrldas_driver
    print*, "zsoil/soil_thick_input = ", noah_lsm%soil_thick_input(1:NSOIL)
 #endif
 
-   call hrldas_drv_HYDRO_ini(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), &
+   call hrldas_drv_HYDRO_ini(state%TSLBXY(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:), &
          infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL, SMOIS,real(noah_lsm%noah_timestep), &
          olddate,zsoil(1:NSOIL))
 
@@ -1488,7 +1491,7 @@ end subroutine land_driver_ini
 #ifdef WRF_HYDRO
       if(forc_typ .eq. 8) then
           call read_forc_ldasout(olddate,hgrid, noah_lsm%indir, dtbl,ix,jx,infxsrt,soldrain)
-          call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
+          call hrldas_drv_HYDRO(state%TSLBXY(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
           call geth_newdate(newdate, olddate, nint(dtbl))
           olddate = newdate
           return
@@ -1503,7 +1506,7 @@ end subroutine land_driver_ini
           call getNameList('igrid', igrid_hydro)  !! get hydro namelist info :: case sensitive
           write(hgrid_hydro,'(I1)') igrid_hydro
           call read_channel_only(olddate, hgrid_hydro, noah_lsm%indir, noah_lsm%forcing_timestep)
-          call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
+          call hrldas_drv_HYDRO(state%TSLBXY(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
           call geth_newdate(newdate, olddate, nint(dtbl))
           olddate = newdate
           return
@@ -1535,7 +1538,7 @@ end subroutine land_driver_ini
            CALL HYDRO_frocing_drv(trim(noah_lsm%indir), forc_typ, wrf_hydro%snow_assim,olddate,                      &
                xstart, xend, ystart, yend,    &
                T_PHY(:,1,:),QV_CURR(:,1,:),U_PHY(:,1,:),V_PHY(:,1,:),P8W(:,1,:),    &
-               GLW,SWDOWN,RAINBL_tmp,LAI,VEGFRA,state%SNOWH,ITIME,noah_lsm%FORCING_TIMESTEP,prcp0)
+               GLW,SWDOWN,RAINBL_tmp,LAI,VEGFRA,state%SNOWHXY,ITIME,noah_lsm%FORCING_TIMESTEP,prcp0)
 
                if(maxval(VEGFRA) .le. 1)  VEGFRA = VEGFRA * 100
 
@@ -1635,11 +1638,11 @@ end subroutine land_driver_ini
 		    P8W,   RAINBL,       SR,                                  &
 		    TSK,      HFX,      QFX,       LH,    GRDFLX,     SMSTAV, &
 		 SMSTOT,SFCRUNOFF, UDRUNOFF,   ALBEDO,     SNOWC,      SMOIS, &
-		   SH2O,     TSLB,     state%SNOW,    state%SNOWH,    CANWAT,     ACSNOM, &
+		   SH2O,     state%TSLBXY,     state%SNEQVXY,    state%SNOWHXY,    CANWAT,     ACSNOM, &
 		 ACSNOW,    EMISS,     QSFC,                                  &
  		     Z0,      ZNT,                                            & ! IN/OUT LSM eqv
-		ISNOWXY,     TVXY,     TGXY, CANICEXY,  CANLIQXY,      EAHXY, &
-		  TAHXY,     CMXY,     CHXY,   FWETXY,  SNEQVOXY,   ALBOLDXY, &
+		state%ISNOWXY,     TVXY,     TGXY, CANICEXY,  CANLIQXY,      EAHXY, &
+		  TAHXY,     CMXY,     CHXY,   FWETXY,  state%SNEQVOXY,   ALBOLDXY, &
 		QSNOWXY, QRAINXY, WSLAKEXY,  ZWTXY,  WAXY,   WTXY,    state%TSNOXY, &
 		state%ZSNSOXY,  state%SNICEXY,  state%SNLIQXY, LFMASSXY,  RTMASSXY,   STMASSXY, &
 		 WOODXY, STBLCPXY, FASTCPXY,      LAI,    XSAIXY,    TAUSSXY, &
@@ -1704,7 +1707,7 @@ end subroutine land_driver_ini
 #ifdef WRF_HYDRO
      call geth_newdate(newdate, olddate, nint(dtbl))
      olddate = newdate
-     call hrldas_drv_HYDRO(TSLB(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
+     call hrldas_drv_HYDRO(state%TSLBXY(:,1:NSOIL,:),SMOIS(:,1:NSOIL,:),SH2O(:,1:NSOIL,:),infxsrt,sfcheadrt,soldrain,ix,jx,NSOIL)
 #endif
 
 ! Output for history
@@ -1722,7 +1725,7 @@ end subroutine land_driver_ini
      if (IVGTYP(xstart,ystart)==ISWATER) then
        write(*,'(" ***DATE=", A19)', advance="NO") olddate
      else
-       write(*,'(" ***DATE=", A19, 6F10.5)', advance="NO") olddate, TSLB(xstart,1,ystart), LAI(xstart,ystart)
+       write(*,'(" ***DATE=", A19, 6F10.5)', advance="NO") olddate, state%TSLBXY(xstart,1,ystart), LAI(xstart,ystart)
      endif
 
 !------------------------------------------------------------------------
@@ -1976,14 +1979,14 @@ subroutine  ldas_output(itime, state)
    !call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,float(ZSNOXY(:,-nsnow+1:0,:)),IVGTYP,57)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,3,state%SNICEXY,IVGTYP,58)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,3,state%SNLIQXY,IVGTYP,59)
-   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,4,TSLB,IVGTYP,60)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,4,state%TSLBXY,IVGTYP,60)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,4,SH2O,IVGTYP,61)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,3,state%TSNOXY,IVGTYP,62)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,4,SMOIS,IVGTYP,63)
-   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,state%SNOWH,IVGTYP,64)
-   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,state%SNOW,IVGTYP,65)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,state%SNOWHXY,IVGTYP,64)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,state%SNEQVXY,IVGTYP,65)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,QSNOWXY,IVGTYP,66)
-   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,float(ISNOWXY),IVGTYP,67)
+   call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,float(state%ISNOWXY),IVGTYP,67)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,SNOWC,IVGTYP,68)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ACSNOW,IVGTYP,69)
    call output_NoahMP_NWM(trim(noah_lsm%outdir),igrid,noah_lsm%output_timestep,itime,startdate,olddate,ixpar,jxpar,1,ACSNOM,IVGTYP,70)
@@ -2024,24 +2027,39 @@ subroutine  ldas_output(itime, state)
 end subroutine  ldas_output
 
 !!===============================================================================
-subroutine lsm_restart(state)
+subroutine lsm_restart(state, posterior)
   use state_module, only: state_type
   implicit none
-  type(state_type) :: state
+  type(state_type), intent(in) :: state
+  logical, intent(in), optional :: posterior
+
   character(len=256):: tmpStr
   integer :: ncid
+  logical :: posterior_  ! local copy
+
+  posterior_ = .false.
+  if(present(posterior)) posterior_ = posterior
 
 #ifdef HYDRO_D
-  print*, 'Write restart at '//olddate(1:13)
+  if(.not. posterior_) then
+     print*, 'Write restart at ' // olddate(1:13)
+  else
+     print*, 'Write posterior restart at ' // olddate(1:13)
+  end if
 #endif
 
-  call prepare_restart_file (trim(noah_lsm%outdir), version, igrid, llanduse, olddate, startdate,                         &
+  if(.not. posterior_) then
+     write(tmpStr, '(A,"/RESTART.",A10,"_DOMAIN",I1)') &
+          trim(noah_lsm%outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13), igrid
+  else
+     write(tmpStr, '(A,"/RESTART_POSTERIOR.",A10,"_DOMAIN",I1)') &
+          trim(noah_lsm%outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13), igrid
+  end if
+
+  call prepare_restart_file (trim(noah_lsm%outdir), version, igrid, llanduse, olddate, startdate,  &
        ixfull, jxfull, ixpar, jxpar, xstartpar, ystartpar,                   &
        nsoil, nsnow, dx, dy, truelat1, truelat2, mapproj, lat1, lon1,        &
-       cen_lon, iswater, ivgtyp)
-
-   write(tmpStr, '(A,"/RESTART.",A10,"_DOMAIN",I1)') trim(noah_lsm%outdir), olddate(1:4)//olddate(6:7)//olddate(9:10)//olddate(12:13), igrid
-
+       cen_lon, iswater, ivgtyp, file_name=tmpStr)
 
 #ifdef MPP_LAND
   if(my_id .eq. io_id) then
@@ -2051,8 +2069,7 @@ subroutine lsm_restart(state)
 #ifdef MPP_LAND
   endif
 #endif
-
-  call add_to_restart(ncid,TSLB      , "SOIL_T", layers="SOIL")
+  call add_to_restart(ncid,state%TSLBXY      , "SOIL_T", layers="SOIL")
   call add_to_restart(ncid,state%TSNOXY    , "SNOW_T", layers="SNOW")
   call add_to_restart(ncid,SMOIS     , "SMC"   , layers="SOIL")
   call add_to_restart(ncid,SH2O      , "SH2O"  , layers="SOIL")
@@ -2061,17 +2078,17 @@ subroutine lsm_restart(state)
   call add_to_restart(ncid,state%SNLIQXY   , "SNLIQ" , layers="SNOW")
   call add_to_restart(ncid,QSNOWXY   , "QSNOW" )
   call add_to_restart(ncid,FWETXY    , "FWET"  )
-  call add_to_restart(ncid,SNEQVOXY  , "SNEQVO")
+  call add_to_restart(ncid,state%SNEQVOXY  , "SNEQVO")
   call add_to_restart(ncid,EAHXY     , "EAH"   )
   call add_to_restart(ncid,TAHXY     , "TAH"   )
   call add_to_restart(ncid,ALBOLDXY  , "ALBOLD")
   call add_to_restart(ncid,CMXY      , "CM"    )
   call add_to_restart(ncid,CHXY      , "CH"    )
-  call add_to_restart(ncid,ISNOWXY   , "ISNOW" )
+  call add_to_restart(ncid,state%ISNOWXY   , "ISNOW" )
   call add_to_restart(ncid,CANLIQXY  , "CANLIQ")
   call add_to_restart(ncid,CANICEXY  , "CANICE")
-  call add_to_restart(ncid,state%SNOW      , "SNEQV" )
-  call add_to_restart(ncid,state%SNOWH     , "SNOWH" )
+  call add_to_restart(ncid,state%SNEQVXY      , "SNEQV" )
+  call add_to_restart(ncid,state%SNOWHXY      , "SNOWH" )
   call add_to_restart(ncid,TVXY      , "TV"    )
   call add_to_restart(ncid,TGXY      , "TG"    )
   call add_to_restart(ncid,ZWTXY     , "ZWT"   )
@@ -2170,7 +2187,7 @@ subroutine lsm_rst_bi_out(state)
   open(iunit,file="restart/"//trim(output_flnm),form="unformatted",ERR=102, access="sequential")
 #endif
 
-  write(iunit,ERR=101) TSLB
+  write(iunit,ERR=101) state%TSLBXY
   write(iunit,ERR=101) state%TSNOXY
   write(iunit,ERR=101) SMOIS
   write(iunit,ERR=101) SH2O
@@ -2179,17 +2196,17 @@ subroutine lsm_rst_bi_out(state)
   write(iunit,ERR=101) state%SNLIQXY
   write(iunit,ERR=101) QSNOWXY
   write(iunit,ERR=101) FWETXY
-  write(iunit,ERR=101) SNEQVOXY
+  write(iunit,ERR=101) state%SNEQVOXY
   write(iunit,ERR=101) EAHXY
   write(iunit,ERR=101) TAHXY
   write(iunit,ERR=101) ALBOLDXY
   write(iunit,ERR=101) CMXY
   write(iunit,ERR=101) CHXY
-  write(iunit,ERR=101) ISNOWXY
+  write(iunit,ERR=101) state%ISNOWXY
   write(iunit,ERR=101) CANLIQXY
   write(iunit,ERR=101) CANICEXY
-  write(iunit,ERR=101) state%SNOW
-  write(iunit,ERR=101) state%SNOWH
+  write(iunit,ERR=101) state%SNEQVXY
+  write(iunit,ERR=101) state%SNOWHXY
   write(iunit,ERR=101) TVXY
   write(iunit,ERR=101) TGXY
   write(iunit,ERR=101) ZWTXY
@@ -2300,7 +2317,7 @@ subroutine lsm_rst_bi_in(state)
 #endif
 
 
-  read(iunit,ERR=101) TSLB
+  read(iunit,ERR=101) state%TSLBXY
   read(iunit,ERR=101) state%TSNOXY
   read(iunit,ERR=101) SMOIS
   read(iunit,ERR=101) SH2O
@@ -2309,17 +2326,17 @@ subroutine lsm_rst_bi_in(state)
   read(iunit,ERR=101) state%SNLIQXY
   read(iunit,ERR=101) QSNOWXY
   read(iunit,ERR=101) FWETXY
-  read(iunit,ERR=101) SNEQVOXY
+  read(iunit,ERR=101) state%SNEQVOXY
   read(iunit,ERR=101) EAHXY
   read(iunit,ERR=101) TAHXY
   read(iunit,ERR=101) ALBOLDXY
   read(iunit,ERR=101) CMXY
   read(iunit,ERR=101) CHXY
-  read(iunit,ERR=101) ISNOWXY
+  read(iunit,ERR=101) state%ISNOWXY
   read(iunit,ERR=101) CANLIQXY
   read(iunit,ERR=101) CANICEXY
-  read(iunit,ERR=101) state%SNOW
-  read(iunit,ERR=101) state%SNOWH
+  read(iunit,ERR=101) state%SNEQVXY
+  read(iunit,ERR=101) state%SNOWHXY
   read(iunit,ERR=101) TVXY
   read(iunit,ERR=101) TGXY
   read(iunit,ERR=101) ZWTXY
@@ -2405,7 +2422,7 @@ subroutine define_rst_variables(ncid, state)
        "Problem nf90_redef")
 ! add the variables
 
-  call define_rst_var(ncid,TSLB      , "SOIL_T", layers="SOIL")
+  call define_rst_var(ncid,state%TSLBXY    , "SOIL_T", layers="SOIL")
   call define_rst_var(ncid,state%TSNOXY    , "SNOW_T", layers="SNOW")
   call define_rst_var(ncid,SMOIS     , "SMC"   , layers="SOIL")
   call define_rst_var(ncid,SH2O      , "SH2O"  , layers="SOIL")
@@ -2414,17 +2431,17 @@ subroutine define_rst_variables(ncid, state)
   call define_rst_var(ncid,state%SNLIQXY   , "SNLIQ" , layers="SNOW")
   call define_rst_var(ncid,QSNOWXY   , "QSNOW" )
   call define_rst_var(ncid,FWETXY    , "FWET"  )
-  call define_rst_var(ncid,SNEQVOXY  , "SNEQVO")
+  call define_rst_var(ncid,state%SNEQVOXY  , "SNEQVO")
   call define_rst_var(ncid,EAHXY     , "EAH"   )
   call define_rst_var(ncid,TAHXY     , "TAH"   )
   call define_rst_var(ncid,ALBOLDXY  , "ALBOLD")
   call define_rst_var(ncid,CMXY      , "CM"    )
   call define_rst_var(ncid,CHXY      , "CH"    )
-  call define_rst_var(ncid,ISNOWXY   , "ISNOW" )
+  call define_rst_var(ncid,state%ISNOWXY   , "ISNOW" )
   call define_rst_var(ncid,CANLIQXY  , "CANLIQ")
   call define_rst_var(ncid,CANICEXY  , "CANICE")
-  call define_rst_var(ncid,state%SNOW      , "SNEQV" )
-  call define_rst_var(ncid,state%SNOWH     , "SNOWH" )
+  call define_rst_var(ncid,state%SNEQVXY      , "SNEQV" )
+  call define_rst_var(ncid,state%SNOWHXY      , "SNOWH" )
   call define_rst_var(ncid,TVXY      , "TV"    )
   call define_rst_var(ncid,TGXY      , "TG"    )
   call define_rst_var(ncid,ZWTXY     , "ZWT"   )
@@ -2478,7 +2495,83 @@ subroutine define_rst_variables(ncid, state)
 
    end subroutine define_rst_variables
 
+
+subroutine snow_update_all(state)
+  ! This routine is called to accept external updates to bulk snow states
+  ! by external and instantaneous means (eg data assimilation). It maps
+  ! the bulk depth (snowh) and swe (sneqv) posteriors onto the layered
+  ! and other variables.
+  ! At this level of snow_update:
+  !   1. query if there are any updates to solve for
+  !   2. gather the requsite data to make the update including
+  !      the forcing data
+  ! All return values/updates are in the state_type (state) data structure.
+  use state_module, only: state_type
+  type(state_type), intent(inout) :: state
+
+  call snow_update(state)
+  call lsm_restart(state, posterior=.true.)
+end subroutine snow_update_all
+
+
+subroutine read_forcing_t2d(t2xy)
+  ! This grabs the 2m temperature from the previous forcing file for use in
+  ! creating snow in the snow update. The current forcing file is used as a
+  ! back up if the previous is unavailable and fails catastrophically if
+  ! neither is available.
+  use netcdf
+
+  real, dimension(:,:), intent(inout) :: t2xy
+
+  integer             :: ierr, ncid, t2id
+  character(len=256)  :: inflnm
+  character(len=19)   :: the_time
+
+  ! We really want the previous forcing timestep, that was used to arrive at the
+  ! restart
+  call geth_newdate(the_time, forcdate, -1 * noah_lsm%forcing_timestep)
+  ierr = 1
+  do while (ierr /= 0)
+     inflnm = trim(noah_lsm%indir) // "/" // &
+          the_time(1:4) // the_time(6:7) // the_time(9:10) // the_time(12:13) // &
+          ".LDASIN_DOMAIN" // hgrid
+     ! inflnm_template = trim(noah_lsm%indir)//"/<date>.LDASIN_DOMAIN"//hgrid
+     ierr = nf90_open(trim(inflnm), nf90_nowrite, ncid)
+
+     if (ierr /= 0 .and. the_time /= forcdate) then
+        ! fall back to the current forcing if the previous is unavailable
+        the_time = forcdate
+        write(*,'("read_forcing_t2d: file unavailable for previous time''", A, "''")') trim(inflnm)
+     else if (ierr /= 0 .and. the_time == forcdate) then
+        call hydro_stop("read_forcing_t2d: no suitable file available")
+     endif
+  end do
+
+  print*, "read_forcing_t2d: reading forcing file: ", trim(inflnm)
+
+  ierr = nf90_inq_varid(ncid, "T2D", t2id)
+  if (ierr /= 0) &
+       call hydro_stop("read_forcing_t2d: 'T2D' variable not found in file")
+
+  ierr = nf90_get_var( &
+       ncid, t2id, t2xy, &
+       start=(/ xstart, ystart /), &
+       count=(/ xend - xstart + 1, yend - ystart + 1 /))
+  if (ierr /= 0) &
+       call hydro_stop("read_forcing_t2d: 'T2D' can not be got from file")
+
+  ierr = nf90_close(ncid)
+  if (ierr /= 0) &
+       call hydro_stop("read_forcing_t2d: can not close file")
+
+end subroutine read_forcing_t2d
+
+
 end module module_NoahMP_hrldas_driver
+
+
+! -----------------------------------------------------------------------------
+
 
 !subroutine wrf_message(msg)
 !  implicit none
