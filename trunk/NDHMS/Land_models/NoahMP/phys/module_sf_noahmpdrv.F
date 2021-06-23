@@ -1930,6 +1930,9 @@ state%snowhxy(ii, jj) = snowh_post
 ! TODO: understand/test the above.
 
 ! Solve a posterior isnow here based on the posterior depth
+if(snowh_post >= .025) then  ! there's a very magic number not .0254
+   isnow = -1
+end if
 
 if(isnow == 0) return
 
@@ -1952,8 +1955,8 @@ allocate(snice_post(1:nsnow))
 allocate(snliq_post(1:nsnow))
 allocate(zsnso(1:(nsoil + nsnow)))
 allocate(zsnso_post(1:(nsoil + nsnow)))
-allocate(dzsnso(1:nsnow))
-allocate(dzsnso_post(1:nsnow))
+allocate(dzsnso(1:(nsnow + nsoil)))
+allocate(dzsnso_post(1:(nsnow + nsoil)))
 ! allocate(snice(-nsnow+1:0))
 ! allocate(snliq(-nsnow+1:0))
 ! allocate(dzsnso(-nsnow+1:nsoil))
@@ -1962,8 +1965,8 @@ allocate(dzsnso_post(1:nsnow))
 ! priors
 snice(1:nsnow) = state%snicexy(ii, :, jj)
 snliq(1:nsnow) = state%snliqxy(ii, :, jj)
-zsnso(1:nsnow) = state%zsnsoxy(ii, :, jj)
-zsnso_post(1:nsnow) = state%zsnsoxy(ii, :, jj)
+zsnso(1:(nsnow + nsoil)) = state%zsnsoxy(ii, :, jj)
+zsnso_post(1:(nsnow + nsoil)) = state%zsnsoxy(ii, :, jj)
 
 ! set empty snow layers to zero: cant this be scalar mult?
 ! TODO: test the following changes
@@ -1972,18 +1975,23 @@ do iz = 1, nsnow
    snliq_post(iz) = zero_f
    ! zero out the snow portions of the zsnso posterior
    zsnso_post(iz) = 0
-   dzsnso_post(iz) = zero_f
-   ! Derive this...
+end do
+! snice_post = snice * zero_f
+! snliq_post = snliq * zero_f
+
+do iz = 1, nsnow + nsoil
+   ! Derive the layer thicknesses from the
+   ! cumulative depth from top of snow/ground
    if(iz .eq. 1) then
       dzsnso(iz) = zsnso(iz)
+      dzsnso_post(iz) = zsnso(iz)
    else
       dzsnso(iz) = zsnso(iz) - zsnso(iz-1)
+      dzsnso_post(iz) = zsnso(iz) - zsnso(iz-1)
    end if
    !dzsnso(iz)= 0.
    !zsnso(iz) = 0.
 enddo
-! snice_post = snice * zero_f
-! snliq_post = snliq * zero_f
 
 ! sum the bulk ice and liquid contents/components of SWE
 ! I'm not sure snice could be zero... that would be runoff? but ok
@@ -2034,12 +2042,6 @@ do iz = 1, nsnow
       snliq_post(iz) = missing_value
    end if
 
-   if(snowh > epsilon_f) then
-      dzsnso_post(iz) = (dzsnso(iz) / snowh) * snowh_post
-   else
-      dzsnso_post(iz) = missing_value
-   end if
-
    ! Dont create negative posterior masses. If that happens
    ! revert to prior. Why not set to zero?
    if(snice_post(iz) < epsilon_f .and. snice_post(iz) /= missing_value) then
@@ -2051,19 +2053,31 @@ do iz = 1, nsnow
    end if
 end do
 
-! recalculate zsnso
+! Layered depth
 do iz = 1, nsnow
+   if(snowh > epsilon_f) then
+      dzsnso_post(iz) = (dzsnso(iz) / snowh) * snowh_post
+      print*, 'snowh: ', snowh
+      print*, 'snowh_post: ', snowh_post
+   else
+      dzsnso_post(iz) = missing_value  ! JLM: should this just be zero?
+   end if
+end do
+
+! recalculate zsnso
+do iz = 1, nsnow + nsoil
    zsnso_post(iz) = sum(dzsnso_post(1:iz))
 end do
 
 ! update state vars
 state%snicexy(ii, :, jj) = snice_post(1:nsnow)
 state%snliqxy(ii, :, jj) = snliq_post(1:nsnow)
-state%zsnsoxy(ii, :, jj) = zsnso_post(1:nsnow)
+state%zsnsoxy(ii, :, jj) = zsnso_post(1:(nsnow + nsoil))
+state%isnowxy(ii, jj) = isnow
 
 ! Not originally applied by dart
-! state%isnowxy(ii, jj) = isnow
 ! state%zsnsoxy(ii, -nsnow+1:nsoil, jj) = zsnso(-nsnow+1:nsoil)
+! state%isnowxy(ii, jj) = isnow
 ! state%tsnoxy(ii, :, jj) = stc(-nsnow+1:0)
 ! state%tslbxy(ii, :, jj) = stc(1:nsoil)
 ! sneqvo
