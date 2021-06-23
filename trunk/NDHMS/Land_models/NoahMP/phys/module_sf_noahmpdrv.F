@@ -1841,7 +1841,7 @@ integer, intent(in)  :: ii
 integer, intent(in)  :: jj
 type(state_type), intent(inout)    :: state
 
-integer :: iz, nsnow, isnow
+integer :: iz, nsnow, isnow, nsoil
 real    :: dsneqv
 real    :: sneqv, snowh, sneqv_post, snowh_post
 real    :: wt_ice, wt_liq
@@ -1849,14 +1849,15 @@ real    :: sum_ice, sum_liq, innov_ice, innov_liq
 real    :: missing_value, snow_density
 real, allocatable, dimension(:) :: snice, snice_post
 real, allocatable, dimension(:) :: snliq, snliq_post
-! real, allocatable, dimension(:) :: dzsnso
-! real, allocatable, dimension(:) :: zsnso
+real, allocatable, dimension(:) :: dzsnso, dzsnso_post
+real, allocatable, dimension(:) :: zsnso, zsnso_post
 real, parameter :: zero_f = 0.00000000
 real, parameter :: one_f = 1.00000000
 real, parameter :: epsilon_f = 1.e-6
 
 missing_value = noah_lsm%undefined_real
 nsnow = noah_lsm%nsnow
+nsoil = noah_lsm%nsoil
 
 ! print*, 'isnow(ii, jj): ', ii, jj, isnow
 
@@ -1949,6 +1950,10 @@ allocate(snice(1:nsnow))
 allocate(snliq(1:nsnow))
 allocate(snice_post(1:nsnow))
 allocate(snliq_post(1:nsnow))
+allocate(zsnso(1:(nsoil + nsnow)))
+allocate(zsnso_post(1:(nsoil + nsnow)))
+allocate(dzsnso(1:nsnow))
+allocate(dzsnso_post(1:nsnow))
 ! allocate(snice(-nsnow+1:0))
 ! allocate(snliq(-nsnow+1:0))
 ! allocate(dzsnso(-nsnow+1:nsoil))
@@ -1957,12 +1962,23 @@ allocate(snliq_post(1:nsnow))
 ! priors
 snice(1:nsnow) = state%snicexy(ii, :, jj)
 snliq(1:nsnow) = state%snliqxy(ii, :, jj)
+zsnso(1:nsnow) = state%zsnsoxy(ii, :, jj)
+zsnso_post(1:nsnow) = state%zsnsoxy(ii, :, jj)
 
 ! set empty snow layers to zero: cant this be scalar mult?
 ! TODO: test the following changes
 do iz = 1, nsnow
    snice_post(iz) = zero_f
    snliq_post(iz) = zero_f
+   ! zero out the snow portions of the zsnso posterior
+   zsnso_post(iz) = 0
+   dzsnso_post(iz) = zero_f
+   ! Derive this...
+   if(iz .eq. 1) then
+      dzsnso(iz) = zsnso(iz)
+   else
+      dzsnso(iz) = zsnso(iz) - zsnso(iz-1)
+   end if
    !dzsnso(iz)= 0.
    !zsnso(iz) = 0.
 enddo
@@ -2005,7 +2021,7 @@ innov_liq = dsneqv * wt_liq
 innov_ice = dsneqv * wt_ice
 
 do iz = 1, nsnow
-   ! Fractional layer weightings for ice and liquid
+   ! Fractional layer weightings for ice and liquid, depth
    if(snice(iz) >= epsilon_f .and. sum_ice > epsilon_f) then
       snice_post(iz) = snice(iz) + (innov_ice * snice(iz) / sum_ice)
    else
@@ -2016,6 +2032,12 @@ do iz = 1, nsnow
       snliq_post(iz) = snliq(iz) + (innov_liq * snliq(iz) / sum_liq)
    else
       snliq_post(iz) = missing_value
+   end if
+
+   if(snowh > epsilon_f) then
+      dzsnso_post(iz) = (dzsnso(iz) / snowh) * snowh_post
+   else
+      dzsnso_post(iz) = missing_value
    end if
 
    ! Dont create negative posterior masses. If that happens
@@ -2029,9 +2051,15 @@ do iz = 1, nsnow
    end if
 end do
 
+! recalculate zsnso
+do iz = 1, nsnow
+   zsnso_post(iz) = sum(dzsnso_post(1:iz))
+end do
+
 ! update state vars
 state%snicexy(ii, :, jj) = snice_post(1:nsnow)
 state%snliqxy(ii, :, jj) = snliq_post(1:nsnow)
+state%zsnsoxy(ii, :, jj) = zsnso_post(1:nsnow)
 
 ! Not originally applied by dart
 ! state%isnowxy(ii, jj) = isnow
@@ -2045,6 +2073,10 @@ deallocate(snice)
 deallocate(snliq)
 deallocate(snice_post)
 deallocate(snliq_post)
+deallocate(zsnso)
+deallocate(zsnso_post)
+deallocate(dzsnso)
+deallocate(dzsnso_post)
 
 ! print*, 'finnished snow_update_inner'
 ! print*, ''
